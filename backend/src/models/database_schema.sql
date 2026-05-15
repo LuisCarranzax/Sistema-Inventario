@@ -66,3 +66,26 @@ CREATE TABLE detalle_ventas (
     FOREIGN KEY (venta_id) REFERENCES ventas(id) ON DELETE CASCADE,
     FOREIGN KEY (producto_id) REFERENCES productos(id)
 );
+
+-- Para el control de acceso:
+ALTER TABLE usuarios ADD COLUMN estado ENUM('pendiente', 'aprobado', 'rechazado') DEFAULT 'pendiente';
+
+-- Para la recuperación de contraseña:
+ALTER TABLE usuarios ADD COLUMN codigo_recuperacion VARCHAR(6);
+ALTER TABLE usuarios 
+ADD COLUMN expira_codigo DATETIME DEFAULT (NOW() + INTERVAL 15 MINUTE);
+
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellidos VARCHAR(100) NOT NULL,
+    correo VARCHAR(150) NOT NULL UNIQUE,
+    celular VARCHAR(15) NOT NULL,
+    dni VARCHAR(15) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    rol ENUM('administrador', 'trabajador') DEFAULT 'trabajador',
+    estado ENUM('pendiente', 'aprobado', 'rechazado') DEFAULT 'pendiente',
+    codigo_recuperacion VARCHAR(6) NULL,
+    expira_codigo DATETIME DEFAULT (NOW() + INTERVAL 15 MINUTE),
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

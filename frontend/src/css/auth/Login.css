@@ -1,0 +1,214 @@
+/* Login.css */
+
+.login-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.login-split-panel {
+  display: flex;
+  width: 100%;
+  max-width: 1000px;
+  background-color: #ffffff;
+  border-radius: 20px;
+  overflow: hidden; /* Para que los bordes redondeados afecten a los hijos */
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+  min-height: 600px;
+}
+
+/* --- LADO VISUAL (Le da vida) --- */
+.login-visual-side {
+  flex: 1;
+  background: linear-gradient(135deg, #4A90E2 0%, #1890ff 100%); /* Gradiente azul vibrante */
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  color: white;
+}
+
+/* Opcional: una imagen de fondo difuminada relacionada con tecnología/datos */
+/* .login-visual-side {
+  background-image: url('tu-imagen.jpg');
+  background-size: cover;
+  background-position: center;
+}
+*/
+
+.branding-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+}
+
+.logo-placeholder {
+  width: 80px;
+  height: 80px;
+  background-color: rgba(255,255,255,0.2);
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 auto 20px auto;
+  border: 2px solid rgba(255,255,255,0.4);
+}
+
+.brand-name {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  letter-spacing: -1px;
+}
+
+.brand-slogan {
+  font-size: 1rem;
+  opacity: 0.9;
+  max-width: 300px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* --- LADO FORMULARIO --- */
+.login-form-side {
+  flex: 1.2; /* Un poco más ancho el formulario */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px;
+}
+
+.login-form-content {
+  width: 100%;
+  max-width: 380px;
+}
+
+.welcome-text {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 5px;
+  letter-spacing: -1px;
+}
+
+.subtitle-text {
+  color: #777;
+  margin-bottom: 35px;
+  font-size: 0.95rem;
+}
+
+.login-form-visual {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Inputs Modernos con Iconos */
+.input-group-modern {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 15px;
+  font-size: 1.1rem;
+  color: #aaa;
+  pointer-events: none; /* No interfiere al hacer click */
+}
+
+.input-group-modern input {
+  width: 100%;
+  padding: 15px 15px 15px 45px; /* Más padding a la izquierda para el icono */
+  border: 1px solid #e1e8ed;
+  background-color: #f9fbfd;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.input-group-modern input:focus {
+  outline: none;
+  border-color: #1890ff;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(24,144,255,0.1);
+}
+
+.forgot-password {
+  align-self: flex-end;
+  font-size: 0.85rem;
+  color: #1890ff;
+  text-decoration: none;
+  font-weight: 500;
+  margin-top: -5px;
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+}
+
+.btn-modern-login {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  box-shadow: 0 5px 15px rgba(24,144,255,0.2);
+}
+
+.btn-modern-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 20px rgba(24,144,255,0.3);
+}
+
+.btn-modern-login:active {
+  transform: translateY(0);
+}
+
+.register-redirect {
+  text-align: center;
+  margin-top: 25px;
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.register-redirect a {
+  color: #1890ff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.register-redirect a:hover {
+  text-decoration: underline;
+}
+
+/* Responsividad básica */
+@media (max-width: 768px) {
+  .login-split-panel {
+    flex-direction: column-reverse; /* Formulario arriba, visual abajo */
+  }
+  
+  .login-visual-side {
+    padding: 30px;
+    min-height: 150px;
+  }
+  
+  .brand-name { font-size: 1.5rem; }
+  .brand-slogan { font-size: 0.9rem; display: none;} /* Ocultamos slogan en móvil */
+
+  .login-form-side {
+    padding: 40px 20px;
+  }
+}

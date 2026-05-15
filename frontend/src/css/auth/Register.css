@@ -1,0 +1,340 @@
+.auth-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: #f0f4f8; /* Fondo general */
+}
+
+.auth-split-panel {
+  display: flex;
+  width: 100%;
+  max-width: 1000px;
+  background-color: #ffffff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+  min-height: 600px;
+}
+
+/* --- LADO VISUAL --- */
+.auth-visual-side {
+  flex: 1;
+  background: linear-gradient(135deg, #4A90E2 0%, #1890ff 100%);
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  color: white;
+}
+
+.branding-content {
+  text-align: center;
+  z-index: 10;
+}
+
+/* Logo con contorno blanco grueso para protegerlo en fondos transparentes/oscuros */
+.logo-placeholder {
+  width: 80px;
+  height: 80px;
+  background-color: rgba(255,255,255,0.2);
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 auto 20px auto;
+  border: 3px solid #ffffff; /* Contorno blanco sólido solicitado */
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.brand-name {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  letter-spacing: -1px;
+}
+
+.brand-slogan {
+  font-size: 1rem;
+  opacity: 0.9;
+  max-width: 300px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* --- LADO FORMULARIO --- */
+.auth-form-side {
+  flex: 1.2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px; /* Un poco menos de padding vertical que el login para que quepa todo */
+}
+
+.auth-form-content {
+  width: 100%;
+  max-width: 400px; /* Un poco más ancho para las filas dobles */
+}
+
+.welcome-text {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 5px;
+  letter-spacing: -1px;
+}
+
+.subtitle-text {
+  color: #777;
+  margin-bottom: 30px;
+  font-size: 0.95rem;
+}
+
+.auth-form-visual {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row-duo {
+  display: flex;
+  gap: 15px;
+}
+
+/* Inputs Modernos */
+.input-group-modern {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-icon {
+  position: absolute;
+  left: 15px;
+  font-size: 1.1rem;
+  color: #aaa;
+  pointer-events: none;
+}
+
+.input-group-modern input {
+  width: 100%;
+  padding: 14px 45px 14px 45px; /* Espacio para el icono a la izquierda */
+  border: 1px solid #e1e8ed;
+  background-color: #f9fbfd;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+/* EFECTO DE OBLIGATORIO Y VALIDACIÓN */
+/* Borde rojo delgado a la izquierda si está vacío pero es requerido */
+.input-group-modern input:required {
+  border-left: 4px solid #ff4d4f;
+}
+
+/* Cambia a verde cuando el usuario llena el campo correctamente */
+.input-group-modern input:required:valid {
+  border-left: 4px solid #52c41a;
+  background-color: #f4fff4; /* Fondo sutilmente verde */
+}
+
+.input-group-modern input:focus {
+  outline: none;
+  border-color: #1890ff;
+  box-shadow: 0 0 0 4px rgba(24,144,255,0.1);
+}
+
+/* BOTÓN DE MOSTRAR CONTRASEÑA */
+.toggle-password-btn {
+  position: absolute;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.toggle-password-btn:hover {
+  transform: scale(1.1);
+}
+
+.input-group-modern input[type="password"],
+.input-group-modern input[type="text"] {
+  padding-right: 45px; /* Espacio para el botón del ojo */
+}
+
+/* MEDIDOR DE SEGURIDAD */
+.strength-meter {
+  margin-top: -8px;
+  padding: 0 5px;
+}
+
+.meter-bar {
+  height: 4px;
+  border-radius: 2px;
+  transition: all 0.4s ease;
+  margin-bottom: 5px;
+}
+
+.strength-meter span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #555;
+}
+
+/* BOTÓN PRINCIPAL */
+.btn-modern-auth {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 5px;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  box-shadow: 0 5px 15px rgba(24,144,255,0.2);
+}
+
+.btn-modern-auth:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 20px rgba(24,144,255,0.3);
+}
+
+.auth-redirect {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.auth-redirect a {
+  color: #1890ff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-redirect a:hover {
+  text-decoration: underline;
+  color: #096dd9;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+  .auth-split-panel {
+    flex-direction: column-reverse;
+  }
+  .form-row-duo {
+    flex-direction: column; /* En móviles los campos dobles se ponen uno sobre otro */
+    gap: 16px;
+  }
+  .auth-visual-side {
+    padding: 30px;
+    min-height: 150px;
+  }
+  .brand-name { font-size: 1.5rem; }
+  .brand-slogan { display: none;}
+  .auth-form-side {
+    padding: 30px 20px;
+  }
+}
+
+/* Transición suave al cargar el componente */
+.view-transition {
+  animation: fadeInScale 0.4s ease-out forwards;
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: translateY(15px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Alertas Personalizadas */
+.custom-alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideDown 0.3s ease-out;
+}
+
+.custom-alert.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #f87171;
+}
+
+.custom-alert.success {
+  background-color: #dcfce3;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Asegurando el borde blanco del logo según tus especificaciones de diseño */
+.logo-placeholder {
+  /* ... tus estilos anteriores ... */
+  border: 3px solid #ffffff; 
+}
+
+.modal-overlay{
+  position: fixed;  /* Ocupa toda la pantalla */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5); /* Fondo oscuro semitransparente */
+  backdrop-filter: blur(5px); /* Efecto de desenfoque detrás del modal (opcional, moderno) */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+/* Ajuste del panel para el modal */
+.blurred-background .auth-split-panel {
+  opacity: 0.5;
+  pointer-events: none; /* Evita que se pueda hacer clic en el fondo mientras está el modal */
+}
+
+.modal-content-success {
+  background-color: white;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  text-align: center;
+  max-width: 400px;
+  animation: modalPop 0.3s ease-out;
+}
+
+@keyframes modalPop {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-content-success p {
+  margin: 20px 0;
+  color: #555;
+  line-height: 1.6;
+}

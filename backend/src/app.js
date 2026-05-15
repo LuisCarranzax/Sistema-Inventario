@@ -2,12 +2,13 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config({ path: '../.env' }); // Asegura que lea el archivo .env en la raíz del backend
 const db = require('./config/db');
-
+const authRoutes = require('./routes/authRoutes');
 const app = express();
 
 // Middlewares
 app.use(cors()); // Permite peticiones cruzadas desde el frontend
 app.use(express.json()); // Permite que la API reciba datos en formato JSON desde el body
+
 
 // Prueba de conexión a la base de datos
 db.getConnection()
@@ -25,7 +26,7 @@ const productoRoutes = require('./routes/productoRoutes');
 
 // Montaje de rutas (Endpoints base)
 app.use('/api/productos', productoRoutes);
-// app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 
 // Ruta de comprobación de salud del servidor (Health check)
 app.get('/', (req, res) => {
