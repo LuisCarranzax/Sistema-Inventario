@@ -31,7 +31,8 @@ const Register = () => {
   const [strength, setStrength] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [alert, setAlert] = useState(null); // Estado para las alertas personalizadas
-  const [isPendingApproval, setIsPendingApproval] = useState(false); // Nuevo estado
+  const [isPendingApproval, setIsPendingApproval] = useState(false);  
+  const [isLoading, setIsLoading] = useState(false); // NUEVO ESTADO
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -65,17 +66,16 @@ const Register = () => {
     }
 
     try {
-      // 3. Petición POST real a tu API Node.js/MongoDB
+      setIsLoading(true); // 1. Desactivamos el botón
+      
       await api.post('/auth/register', formData);
       
       setIsPendingApproval(true);
-      
-      // Redirección usando react-router-dom
-      setTimeout(() => navigate('/login'), 100000);
 
     } catch (error) {
       setAlert({ type: 'error', message: error.response?.data?.message || 'Hubo un problema al crear la cuenta' });
-      console.log(error);
+    } finally {
+      setIsLoading(false); // 2. Volvemos a activar el botón pase lo que pase
     }
   };
 
@@ -162,8 +162,14 @@ const Register = () => {
                 />
               </div>
               
-              <button type="submit" className="btn-modern-auth">Registrarse</button>
-              
+              <button 
+                type="submit" 
+                className="btn-modern-auth" 
+                disabled={isLoading} // Se desactiva si está cargando
+                style={{ opacity: isLoading ? 0.7 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
+              >
+                {isLoading ? 'Enviando solicitud...' : 'Registrarse'}
+              </button>              
               <div className="auth-redirect">
                 ¿Ya tienes cuenta? <Link to='/login'>Inicia Sesión</Link>
               </div>

@@ -1,3 +1,4 @@
+const emailService = require('../services/emailServices');
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 
@@ -25,9 +26,11 @@ exports.registrarUsuario = async (req, res) => {
             VALUES (?, ?, ?, ?, ?, ?, 'pendiente')
         `;
         
-        await db.query(query, [nombre, apellidos, correo, celular, dni, passwordHash]);
+        const [result] = await db.query(query, [nombre, apellidos, correo, celular, dni, passwordHash]);
+        
+        const usuarioParaCorreo = { id: result.insertId, ...req.body };
+        await emailService.notificarAdminNuevoRegistro(usuarioParaCorreo);
 
-        // Nota: El siguiente paso será disparar el correo al administrador aquí
         res.status(201).json({ 
             message: "Registro exitoso. Su cuenta está pendiente de aprobación." 
         });
