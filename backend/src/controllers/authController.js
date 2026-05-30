@@ -75,3 +75,41 @@ exports.loginUsuario = async (req, res) => {
         res.status(500).json({ message: "Error en el servidor", error: error.message });
     }
 };
+
+// Asegúrate de tener importado el emailService arriba
+// const emailService = require('../services/emailService');
+
+exports.aprobarUsuario = async (req, res) => {
+    const { id } = req.params;
+    try {
+        // 1. Actualizamos el estado a 'aprobado'
+        await db.query("UPDATE usuarios SET estado = 'aprobado' WHERE id = ?", [id]);
+        
+        // 2. Obtenemos los datos del usuario para enviarle el correo
+        const [usuarios] = await db.query("SELECT nombre, correo FROM usuarios WHERE id = ?", [id]);
+        if (usuarios.length > 0) {
+            await emailService.notificarUsuarioResultado(usuarios[0].correo, usuarios[0].nombre, 'aprobado');
+        }
+
+        // 3. Mostramos un mensaje visual al administrador en su navegador
+        res.send('<h2 style="color: green; text-align: center; margin-top: 50px;">✅ Usuario Aprobado Exitosamente. Ya puede ingresar al sistema.</h2>');
+    } catch (error) {
+        res.status(500).send('Error al aprobar usuario.');
+    }
+};
+
+exports.rechazarUsuario = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.query("UPDATE usuarios SET estado = 'rechazado' WHERE id = ?", [id]);
+        
+        const [usuarios] = await db.query("SELECT nombre, correo FROM usuarios WHERE id = ?", [id]);
+        if (usuarios.length > 0) {
+            await emailService.notificarUsuarioResultado(usuarios[0].correo, usuarios[0].nombre, 'rechazado');
+        }
+
+        res.send('<h2 style="color: red; text-align: center; margin-top: 50px;">❌ Usuario Rechazado. Se ha notificado al solicitante.</h2>');
+    } catch (error) {
+        res.status(500).send('Error al rechazar usuario.');
+    }
+};

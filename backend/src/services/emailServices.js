@@ -60,7 +60,48 @@ const notificarAdminNuevoRegistro = async (usuarioData) => {
         console.error('Error al enviar correo al administrador:', error);
     }
 };
+// Función para notificar al trabajador su resultado 
+const notificarUsuarioResultado = async (correo, nombre, estado) => {
+    let subject = '';
+    let mensaje = '';
 
+    if (estado === 'aprobado') {
+        subject = '🎉 ¡Bienvenido al Sistema de Inventario!';
+        mensaje = `<p>Hola ${nombre},</p>
+                   <p>Tu solicitud ha sido <strong>aprobada</strong> por el administrador.</p>
+                   <p>Ya puedes ingresar al sistema con tus credenciales.</p>
+                   <a href="http://localhost:5173/login" style="background-color: #22c55e; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Iniciar Sesión</a>`;
+    } else {
+        subject = 'ℹ️ Actualización de tu solicitud de acceso';
+        mensaje = `<p>Hola ${nombre},</p>
+                   <p>Agradecemos tu interés, pero tu solicitud de acceso al sistema ha sido <strong>rechazada</strong> en esta ocasión.</p>
+                   <p>Si consideras que es un error, por favor contacta al administrador del local.</p>`;
+    }
+
+    const htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+            <h2 style="color: #0f172a; text-align: center;">Sistema de Gestión IT</h2>
+            <div style="background-color: #f8fafc; padding: 20px; color: #333;">
+                ${mensaje}
+            </div>
+        </div>
+    `;
+
+    try {
+        await transporter.sendMail({
+            from: `"Sistema Inventario" <${process.env.EMAIL_USER}>`,
+            to: correo,
+            subject: subject,
+            html: htmlContent
+        });
+        console.log(`Correo de ${estado} enviado a ${correo}`);
+    } catch (error) {
+        console.error('Error al enviar correo al usuario:', error);
+    }
+};
+
+// No olvides exportar la nueva función
 module.exports = {
-    notificarAdminNuevoRegistro
+    notificarAdminNuevoRegistro,
+    notificarUsuarioResultado
 };
