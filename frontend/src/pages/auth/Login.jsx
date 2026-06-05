@@ -34,7 +34,7 @@ const Login = () => {
       login(response.data.user);
       
       // Redirigimos al Dashboard
-      setTimeout(() => navigate('/'), 1500);
+      setTimeout(() => navigate('/dashboard'), 1500);
 
     } catch (error) {
       setAlert({ type: 'error', message: error.response?.data?.message || 'Error al conectar con el servidor' });
@@ -80,9 +80,9 @@ const Login = () => {
 
         <div className="auth-visual-side">
           <div className="branding-content">
-            <div className="logo-placeholder">NS</div>
-            <h2 className="brand-name">Nova Salud</h2>
-            <p className="brand-slogan">Automatiza tus ventas, optimiza tu negocio y olvida el cuaderno.</p>
+            <div className="logo-placeholder">CD</div>
+            <h2 className="brand-name">CompuDoctor</h2>
+            <p className="brand-slogan">Tu negocio de informática al alcance de tus manos.</p>
           </div>
         </div>
       </div>

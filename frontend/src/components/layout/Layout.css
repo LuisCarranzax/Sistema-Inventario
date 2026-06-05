@@ -1,0 +1,104 @@
+/* Contenedor Maestro */
+.app-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* =========================================
+   BARRA LATERAL (SIDEBAR) [cite: 423]
+   ========================================= */
+.sidebar {
+  background-color: var(--sidebar-dark);
+  color: var(--text-light);
+  width: 250px;
+  flex-shrink: 0;
+  transition: width var(--transition-speed) ease;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Clase dinámica para colapsar en pantallas pequeñas [cite: 424, 446] */
+.sidebar.collapsed {
+  width: 80px;
+}
+
+.sidebar-header {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.brand-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 1.5rem;
+}
+
+/* Bienvenida Dinámica [cite: 426] */
+.user-greeting {
+  padding: 15px 20px;
+  font-size: 0.9rem;
+  color: #94A3B8;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Menú de Navegación */
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0;
+  flex-grow: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  color: var(--text-light);
+  transition: background var(--transition-speed);
+}
+
+.nav-item:hover, .nav-item.active {
+  background-color: var(--sidebar-hover);
+  border-left: 4px solid var(--accent-color);
+}
+
+.nav-icon {
+  font-size: 1.2rem;
+  min-width: 30px; /* Mantiene el icono centrado incluso si se colapsa */
+}
+
+.nav-text {
+  margin-left: 10px;
+  white-space: nowrap;
+  transition: opacity var(--transition-speed);
+}
+
+.sidebar.collapsed .nav-text, 
+.sidebar.collapsed .user-greeting,
+.sidebar.collapsed .brand-title {
+  display: none; /* Oculta el texto al colapsar [cite: 446] */
+}
+
+/* =========================================
+   CONTENIDO PRINCIPAL (DASHBOARD/MÓDULOS)
+   ========================================= */
+.main-content {
+  flex-grow: 1;
+  overflow-y: auto; /* Solo esta área permite scroll */
+  padding: 30px;
+  background-color: var(--bg-main);
+}

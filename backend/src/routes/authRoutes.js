@@ -14,4 +14,9 @@ router.post('/login', authController.loginUsuario);
 router.get('/aprobar/:id', authController.aprobarUsuario);
 router.get('/rechazar/:id', authController.rechazarUsuario);
 
+// Rutas para recuperación de contraseña
+router.post('/forgot-password', authController.solicitarRecuperacion);
+router.post('/verify-otp', authController.verificarOTP);
+router.post('/reset-password', authController.restablecerPassword);
+
 module.exports = router;

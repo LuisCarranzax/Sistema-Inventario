@@ -100,8 +100,34 @@ const notificarUsuarioResultado = async (correo, nombre, estado) => {
     }
 };
 
-// No olvides exportar la nueva función
+const enviarCorreoRecuperacion = async (correo, codigo) => {
+    const htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; text-align: center;">
+            <h2 style="color: #0f172a;">Recuperación de Contraseña</h2>
+            <p>Has solicitado restablecer tu contraseña. Usa el siguiente código de seguridad de 6 dígitos para continuar. Este código expirará en 15 minutos.</p>
+            <div style="margin: 20px 0; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #2563eb; background-color: #f1f5f9; padding: 15px; border-radius: 5px;">
+                ${codigo}
+            </div>
+            <p style="font-size: 12px; color: #64748b;">Si no solicitaste este cambio, ignora este correo.</p>
+        </div>
+    `;
+
+    try {
+        await transporter.sendMail({
+            from: `"Sistema Inventario" <${process.env.EMAIL_USER}>`,
+            to: correo,
+            subject: '🔑 Código de Recuperación de Contraseña',
+            html: htmlContent
+        });
+        console.log(`Código OTP enviado a ${correo}`);
+    } catch (error) {
+        console.error('Error al enviar correo OTP:', error);
+        throw new Error('No se pudo enviar el correo');
+    }
+};
+
 module.exports = {
     notificarAdminNuevoRegistro,
-    notificarUsuarioResultado
-};
+    notificarUsuarioResultado,
+    enviarCorreoRecuperacion
+}; 

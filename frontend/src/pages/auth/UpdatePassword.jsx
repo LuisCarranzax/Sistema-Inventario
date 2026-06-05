@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertCircle, FiCheckCircle, FiKey } from 'react-icons/fi';
 import '../../css/auth/Register.css';
+import api from '../../services/api';
 
 const UpdatePassword = () => {
   const [step, setStep] = useState(1); // 1: Correo, 2: Código OTP, 3: Nueva Contraseña
@@ -9,6 +10,7 @@ const UpdatePassword = () => {
   const [passwords, setPasswords] = useState({ newPassword: '', confirmNewPassword: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [alert, setAlert] = useState(null);
+  
 
   // PASO 1: Enviar Correo y pedir código
   const handleVerifyEmail = async (e) => {
@@ -17,11 +19,16 @@ const UpdatePassword = () => {
 
     try {
       // Lógica backend: Buscar usuario y enviar correo con código generado
-      // await api.post('/auth/forgot-password', { email });
-      setAlert({ type: 'success', message: 'Código enviado a tu correo.' });
+      const response = await api.post('/auth/forgot-password', { email: email.trim() });
+
+      setAlert({ type: 'success', message: response.data.message });
       setStep(2);
     } catch (error) {
-      setAlert({ type: 'error', message: 'No existe una cuenta con este correo.' });
+      // AHORA SÍ LEEMOS EL ERROR REAL DEL BACKEND
+      setAlert({ 
+        type: 'error', 
+        message: error.response?.data?.message || 'Error interno del servidor. Revisa la consola del backend.' 
+      });
     }
   };
 
@@ -32,7 +39,7 @@ const UpdatePassword = () => {
 
     try {
       // Lógica backend: Verificar que el código coincida y no haya expirado
-      // await api.post('/auth/verify-otp', { email, otpCode });
+      await api.post('/auth/verify-otp', { email, otpCode });
       setAlert(null);
       setStep(3);
     } catch (error) {
@@ -49,7 +56,7 @@ const UpdatePassword = () => {
 
     try {
       // Lógica backend: Actualizar password en BD
-      // await api.post('/auth/reset-password', { email, otpCode, newPassword: passwords.newPassword });
+      await api.post('/auth/reset-password', { email, otpCode, newPassword: passwords.newPassword });
       setAlert({ type: 'success', message: '¡Contraseña actualizada con éxito!' });
       setTimeout(() => { window.location.href = '/login'; }, 2000);
     } catch (error) {
@@ -101,7 +108,30 @@ const UpdatePassword = () => {
             {/* RENDERIZADO DEL PASO 3 (Nueva Contraseña) */}
             {step === 3 && (
               <form onSubmit={handleUpdatePassword} className="auth-form-visual view-transition" noValidate>
-                {/* ... (Tus inputs de contraseña actuales se mantienen aquí) ... */}
+                <div className="input-group-modern">
+                  <FiLock className="input-icon" />
+                  <input 
+                    type={passwords.showNewPassword ? "text" : "password"} 
+                    placeholder="Nueva Contraseña" 
+                    value={passwords.newPassword} 
+                    onChange={(e) => setPasswords({...passwords, newPassword: e.target.value})} 
+                  />
+                  <button type="button" className="toggle-pass-btn" onClick={() => setPasswords({...passwords, showNewPassword: !passwords.showNewPassword})}>
+                    {passwords.showNewPassword ? <FiEye /> : <FiEyeOff />}
+                  </button>
+                </div>
+                <div className="input-group-modern">
+                  <FiLock className="input-icon" />
+                  <input 
+                    type={passwords.showConfirmPassword ? "text" : "password"} 
+                    placeholder="Confirmar Nueva Contraseña" 
+                    value={passwords.confirmNewPassword} 
+                    onChange={(e) => setPasswords({...passwords, confirmNewPassword: e.target.value})} 
+                  />
+                  <button type="button" className="toggle-pass-btn" onClick={() => setPasswords({...passwords, showConfirmPassword: !passwords.showConfirmPassword})}>
+                    {passwords.showConfirmPassword ? <FiEye /> : <FiEyeOff />}
+                  </button>
+                </div>
                 <button type="submit" className="btn-modern-auth">Guardar Cambios</button>
               </form>
             )}

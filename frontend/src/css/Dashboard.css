@@ -1,0 +1,123 @@
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Encabezado de Bienvenida */
+.welcome-header h1 {
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+}
+
+.welcome-header p {
+  color: #64748B;
+  font-size: 1rem;
+}
+
+/* =========================================
+   CUADRÍCULA DE RESUMEN MENSUAL
+   ========================================= */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.summary-card {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  transition: transform var(--transition-speed);
+}
+
+.summary-card:hover {
+  transform: translateY(-5px);
+}
+
+.summary-icon {
+  background-color: #EFF6FF;
+  color: var(--accent-color);
+  padding: 15px;
+  border-radius: 10px;
+  font-size: 1.8rem;
+  margin-right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-info h3 {
+  font-size: 0.9rem;
+  color: #64748B;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.summary-info p {
+  font-size: 1.4rem;
+  color: var(--text-primary);
+  font-weight: bold;
+}
+
+/* =========================================
+   SISTEMA DE SEMÁFORO DE INVENTARIO
+   ========================================= */
+.inventory-status-section {
+  background-color: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+}
+
+.inventory-status-section h2 {
+  font-size: 1.2rem;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--bg-main);
+  padding-bottom: 10px;
+}
+
+.traffic-light-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: var(--bg-main);
+  border-left: 6px solid;
+}
+
+/* Colores del semáforo conectados a nuestras variables globales */
+.status-high { border-left-color: var(--status-high); }
+.status-medium { border-left-color: var(--status-medium); }
+.status-low { border-left-color: var(--status-low); }
+
+.status-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+}
+
+.status-count {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

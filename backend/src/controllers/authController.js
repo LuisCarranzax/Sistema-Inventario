@@ -77,39 +77,135 @@ exports.loginUsuario = async (req, res) => {
 };
 
 // Asegúrate de tener importado el emailService arriba
-// const emailService = require('../services/emailService');
+
 
 exports.aprobarUsuario = async (req, res) => {
     const { id } = req.params;
     try {
-        // 1. Actualizamos el estado a 'aprobado'
-        await db.query("UPDATE usuarios SET estado = 'aprobado' WHERE id = ?", [id]);
+        const [usuarios] = await db.query("SELECT nombre, correo, estado FROM usuarios WHERE id = ?", [id]);
+        if (usuarios.length === 0) return res.status(404).send('Usuario no encontrado');
         
-        // 2. Obtenemos los datos del usuario para enviarle el correo
-        const [usuarios] = await db.query("SELECT nombre, correo FROM usuarios WHERE id = ?", [id]);
-        if (usuarios.length > 0) {
-            await emailService.notificarUsuarioResultado(usuarios[0].correo, usuarios[0].nombre, 'aprobado');
-        }
+        // EL CANDADO: Si ya no está pendiente, bloqueamos la acción
+        if (usuarios[0].estado !== 'pendiente') {
+            return res.send('<h2 style="color: #f59e0b; text-align: center; margin-top: 50px;">⚠️ Esta solicitud ya fue procesada anteriormente.</h2>');
+        } 
 
-        // 3. Mostramos un mensaje visual al administrador en su navegador
-        res.send('<h2 style="color: green; text-align: center; margin-top: 50px;">✅ Usuario Aprobado Exitosamente. Ya puede ingresar al sistema.</h2>');
-    } catch (error) {
-        res.status(500).send('Error al aprobar usuario.');
+        await db.query("UPDATE usuarios SET estado = 'aprobado' WHERE id = ?", [id]);
+        await emailService.notificarUsuarioResultado(usuarios[0].correo, usuarios[0].nombre, 'aprobado');
+        res.send('<h2 style="color: green; text-align: center; margin-top: 50px;">✅ Usuario Aprobado Exitosamente.</h2>');
+    } catch (error) { 
+        res.status(500).send('Error.');
     }
 };
 
 exports.rechazarUsuario = async (req, res) => {
     const { id } = req.params;
     try {
-        await db.query("UPDATE usuarios SET estado = 'rechazado' WHERE id = ?", [id]);
-        
-        const [usuarios] = await db.query("SELECT nombre, correo FROM usuarios WHERE id = ?", [id]);
-        if (usuarios.length > 0) {
-            await emailService.notificarUsuarioResultado(usuarios[0].correo, usuarios[0].nombre, 'rechazado');
+        const [usuarios] = await db.query("SELECT nombre, correo, estado FROM usuarios WHERE id = ?", [id]);
+        if (usuarios.length === 0) return res.status(404).send('Usuario no encontrado');
+        if(usuarios[0].estado !== 'pendiente') {
+            return res.send('<h2 style="color: #f59e0b; text-align: center; margin-top: 50px;">⚠️ Esta solicitud ya fue procesada anteriormente.</h2>');
         }
-
+        
+        await db.query("UPDATE usuarios SET estado = 'rechazado' WHERE id = ?", [id]);
+        await emailService.notificarUsuarioResultado(usuarios[0].correo, usuarios[0].nombre, 'rechazado');
         res.send('<h2 style="color: red; text-align: center; margin-top: 50px;">❌ Usuario Rechazado. Se ha notificado al solicitante.</h2>');
     } catch (error) {
         res.status(500).send('Error al rechazar usuario.');
+    }
+};
+
+// PASO 1: Generar código (o reutilizar el activo) y enviarlo por correo
+exports.solicitarRecuperacion = async (req, res) => {
+    const { email } = req.body;
+    try {
+        // 1. Buscamos al usuario incluyendo sus datos de recuperación actuales
+        const [usuarios] = await db.query(
+            "SELECT id, codigo_recuperacion, expira_codigo FROM usuarios WHERE correo = ?", 
+            [email]
+        );
+
+        if (usuarios.length === 0) {
+            return res.status(404).json({ message: "No existe una cuenta con este correo." });
+        }
+
+        const usuario = usuarios[0];
+
+        // 2. EL CANDADO INTELIGENTE: Verificar si ya existe un código activo
+        // Comparamos la fecha de expiración guardada con la fecha actual del servidor
+        if (usuario.codigo_recuperacion && new Date(usuario.expira_codigo) > new Date()) {
+            return res.status(200).json({ 
+                message: "Ya hemos enviado un código válido a tu correo recientemente. Por favor, revísalo." 
+            });
+        }
+
+        // 3. Si no tiene código o ya expiró (pasaron los 15 min), generamos uno nuevo
+        const codigoOTP = Math.floor(100000 + Math.random() * 900000).toString();
+
+        await db.query(`
+            UPDATE usuarios 
+            SET codigo_recuperacion = ?, expira_codigo = (NOW() + INTERVAL 15 MINUTE) 
+            WHERE correo = ?`, 
+            [codigoOTP, email]
+        );
+
+        await emailService.enviarCorreoRecuperacion(email, codigoOTP);
+        
+        res.status(200).json({ message: "Nuevo código de seguridad enviado a tu correo." });
+
+    } catch (error) {
+        res.status(500).json({ message: "Error interno del servidor", error: error.message });
+    }
+};
+
+// PASO 2: Verificar que el código sea correcto y no haya expirado
+exports.verificarOTP = async (req, res) => {
+    const { email, otpCode } = req.body;
+    try {
+        // Buscamos el usuario y verificamos si la fecha actual (NOW) es menor a la de expiración
+        const [usuarios] = await db.query(`
+            SELECT id FROM usuarios 
+            WHERE correo = ? AND codigo_recuperacion = ? AND expira_codigo > NOW()
+        `, [email, otpCode]);
+
+        if (usuarios.length === 0) {
+            return res.status(400).json({ message: "El código es inválido o ha expirado." });
+        }
+
+        res.json({ message: "Código verificado correctamente." });
+    } catch (error) {
+        res.status(500).json({ message: "Error interno del servidor", error: error.message });
+    }
+};
+
+// PASO 3: Guardar la nueva contraseña
+exports.restablecerPassword = async (req, res) => {
+    const { email, otpCode, newPassword } = req.body;
+    try {
+        // Doble verificación por seguridad
+        const [usuarios] = await db.query(`
+            SELECT id FROM usuarios 
+            WHERE correo = ? AND codigo_recuperacion = ? AND expira_codigo > NOW()
+        `, [email, otpCode]);
+
+        if (usuarios.length === 0) {
+            return res.status(400).json({ message: "El código es inválido o ha expirado." });
+        }
+
+        // Encriptar la nueva contraseña
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(newPassword, salt);
+
+        // Actualizar contraseña y limpiar el código de seguridad
+        await db.query(`
+            UPDATE usuarios 
+            SET password = ?, codigo_recuperacion = NULL, expira_codigo = NULL 
+            WHERE correo = ?`, 
+            [passwordHash, email]
+        );
+
+        res.json({ message: "¡Contraseña actualizada con éxito!" });
+    } catch (error) {
+        res.status(500).json({ message: "Error interno del servidor", error: error.message });
     }
 };
