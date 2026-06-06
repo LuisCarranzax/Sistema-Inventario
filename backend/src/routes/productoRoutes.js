@@ -3,16 +3,11 @@ const router = express.Router();
 const productoController = require('../controllers/productoController');
 
 // Ruta para crear producto: POST /api/productos
-router.post('/', productoController.crearProducto);
+router.post('/registrar', productoController.registrarProducto);
 
-// Ruta para listar todos (útil para la tabla de inventario) [cite: 8]
-router.get('/', async (req, res) => {
-    try {
-        const [productos] = await require('../config/db').query('SELECT * FROM productos');
-        res.json(productos);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+router.get('/', productoController.obtenerProductos);
+router.delete('/:id', productoController.eliminarProducto);
+router.put('/:id', productoController.actualizarProducto);
 
 module.exports = router;
+

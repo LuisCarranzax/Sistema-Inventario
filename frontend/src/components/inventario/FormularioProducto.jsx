@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../../services/api';
 import './FormularioProducto.css';
+import { useToast } from '../../context/ToastContext';
 
-// 1. DICCIONARIO DE ATRIBUTOS DINÁMICOS
-// Aquí definimos qué campos extra aparecen según la categoría
+// Diccionario de atributos dinámicos
 const configuracionCategorias = {
   'Cargadores': [
     { nombre: 'tipo', label: 'Tipo', tipo: 'select', opciones: ['Cubo', 'Cable', 'Cubo + Cable'] },
@@ -12,7 +13,6 @@ const configuracionCategorias = {
   ],
   'Mouse': [
     { nombre: 'tamano', label: 'Tamaño/Forma', tipo: 'select', opciones: ['Pequeño', 'Grande', 'Ergonómico'] },
-    // El tipo 'checkbox' permite selección múltiple como pediste
     { nombre: 'conexiones', label: 'Tipo de Conexión (Puedes elegir varias)', tipo: 'checkbox', opciones: ['Cableado', '2.4 GHz', 'Bluetooth'] },
     { nombre: 'marca', label: 'Marca', tipo: 'text' },
     { nombre: 'color', label: 'Color', tipo: 'text' }
@@ -25,19 +25,38 @@ const configuracionCategorias = {
     { nombre: 'tipo_cable', label: 'Tipo de Cable', tipo: 'select', opciones: ['VGA', 'HDMI', 'DisplayPort', 'Cable de Poder', 'Trébol'] },
     { nombre: 'longitud', label: 'Longitud (Metros)', tipo: 'text' }
   ]
-  // Puedes agregar 'Teclados', 'Audifonos', etc. siguiendo este mismo patrón.
 };
 
-
-const FormularioProducto = () => {
+// 1. AÑADIMOS LOS PROPS AQUI:
+const FormularioProducto = ({ productoAEditar, cerrarFormulario }) => {
+  const { showToast } = useToast();
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
-  
-  // Estado para los campos generales
   const [datosGenerales, setDatosGenerales] = useState({
-  nombre: '', precio_compra: '', precio_venta: '', stock: '', stock_minimo: ''});
-
-  // Estado para los campos dinámicos
+    nombre: '', precio_compra: '', precio_venta: '', stock: '', stock_minimo: ''
+  });
   const [detallesTecnicos, setDetallesTecnicos] = useState({});
+
+  // 2. EL EFECTO DE MEMORIA (Modo Edición)
+  useEffect(() => {
+    if (productoAEditar) {
+      // Si llega un producto, llenamos el formulario
+      setCategoriaSeleccionada(productoAEditar.categoria_nombre);
+      setDatosGenerales({
+        nombre: productoAEditar.nombre,
+        precio_compra: productoAEditar.precio_compra,
+        precio_venta: productoAEditar.precio_venta,
+        stock: productoAEditar.stock,
+        stock_minimo: productoAEditar.stock_minimo
+      });
+      
+      // Convertimos el JSON de MySQL a un objeto de React
+      let detalles = productoAEditar.detalles_tecnicos;
+      if (typeof detalles === 'string') {
+        try { detalles = JSON.parse(detalles); } catch (e) { detalles = {}; }
+      }
+      setDetallesTecnicos(detalles || {});
+    }
+  }, [productoAEditar]);
 
   const handleGeneralChange = (e) => {
     setDatosGenerales({ ...datosGenerales, [e.target.name]: e.target.value });
@@ -48,7 +67,6 @@ const FormularioProducto = () => {
   };
 
   const handleCheckboxChange = (nombreCampo, opcion) => {
-    // Lógica especial para guardar múltiples checkboxes en un array
     const valoresActuales = detallesTecnicos[nombreCampo] || [];
     if (valoresActuales.includes(opcion)) {
       setDetallesTecnicos({ ...detallesTecnicos, [nombreCampo]: valoresActuales.filter(item => item !== opcion) });
@@ -57,34 +75,57 @@ const FormularioProducto = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Aquí empaquetamos todo para enviarlo al backend en el futuro
+
     const productoFinal = {
       ...datosGenerales,
       categoria: categoriaSeleccionada,
-      detalles_tecnicos: detallesTecnicos // Esto se guardará como JSON en MySQL
+      detalles_tecnicos: detallesTecnicos 
     };
-    console.log("Producto a guardar:", productoFinal);
-    alert("Revisa la consola (F12) para ver la estructura de los datos");
+
+    try {
+      // 3. DECIDIMOS SI ACTUALIZAR (PUT) O REGISTRAR (POST)
+      if (productoAEditar) {
+        await api.put(`/productos/${productoAEditar.id}`, productoFinal);
+        showToast('Producto actualizado correctamente.', 'success');
+      } else {
+        const response = await api.post('/productos/registrar', productoFinal);
+        showToast(`${response.data.message} Código interno: ${response.data.codigo}`, 'success');
+      }
+
+      // Si nos pasaron la función para cerrar (volver a la tabla), la ejecutamos
+      if (cerrarFormulario) {
+        cerrarFormulario();
+      } else {
+        // Si estamos creando varios seguidos, solo limpiamos
+        setDatosGenerales({ nombre: '', precio_compra: '', precio_venta: '', stock: '', stock_minimo: '' });
+        setCategoriaSeleccionada('');
+        setDetallesTecnicos({});
+      }
+
+    } catch (error) {
+      console.error("Error al procesar:", error);
+      showToast(`Error: ${error.response?.data?.message || 'Error en el servidor'}`, 'error');
+    }
   };
 
   return (
     <div className="form-container">
-      <h2>Registrar Nuevo Producto</h2>
+      <h2>{productoAEditar ? 'Editar Producto' : 'Registrar Nuevo Producto'}</h2>
       
       <form onSubmit={handleSubmit}>
         
-        {/* === SECCIÓN 1: SELECTOR DE CATEGORÍA === */}
         <div className="input-group">
           <label>Categoría del Producto</label>
           <select 
             value={categoriaSeleccionada} 
             onChange={(e) => {
               setCategoriaSeleccionada(e.target.value);
-              setDetallesTecnicos({}); // Limpiamos los detalles si cambia de categoría
+              setDetallesTecnicos({}); 
             }}
             required
+            disabled={!!productoAEditar} /* Bloqueamos cambiar la categoría si estamos editando */
           >
             <option value="">-- Selecciona una categoría --</option>
             {Object.keys(configuracionCategorias).map(cat => (
@@ -93,37 +134,35 @@ const FormularioProducto = () => {
           </select>
         </div>
 
-        {/* === SECCIÓN 2: DATOS GENERALES (Siempre visibles) === */}
         {categoriaSeleccionada && (
           <>
             <h3 className="form-section-title">Datos Comerciales</h3>
             
             <div className="input-group">
               <label>Nombre del Producto</label>
-              <input type="text" name="nombre" onChange={handleGeneralChange} required placeholder="Ej: Mouse Logitech M170" />
+              <input type="text" name="nombre" value={datosGenerales.nombre} onChange={handleGeneralChange} required />
             </div>
 
             <div className="grid-2-cols">
               <div className="input-group">
-                <label>Precio de Compra (S/)</label>
-                <input type="number" step="0.10" name="precio_compra" onChange={handleGeneralChange} required />
+                <label>Precio Compra (S/)</label>
+                <input type="number" step="0.10" name="precio_compra" value={datosGenerales.precio_compra} onChange={handleGeneralChange} required />
               </div>
               <div className="input-group">
-                <label>Precio de Venta (S/)</label>
-                <input type="number" step="0.10" name="precio_venta" onChange={handleGeneralChange} required />
+                <label>Precio Venta (S/)</label>
+                <input type="number" step="0.10" name="precio_venta" value={datosGenerales.precio_venta} onChange={handleGeneralChange} required />
               </div>
               <div className="input-group">
                 <label>Stock Actual</label>
-                <input type="number" name="stock" onChange={handleGeneralChange} required />
+                <input type="number" name="stock" value={datosGenerales.stock} onChange={handleGeneralChange} required />
               </div>
               <div className="input-group">
                 <label>Stock Mínimo (Alerta)</label>
-                <input type="number" name="stock_minimo" onChange={handleGeneralChange} required />
+                <input type="number" name="stock_minimo" value={datosGenerales.stock_minimo} onChange={handleGeneralChange} required />
               </div>
             </div>
 
-            {/* === SECCIÓN 3: CAMPOS DINÁMICOS === */}
-            {configuracionCategorias[categoriaSeleccionada].length > 0 && (
+            {configuracionCategorias[categoriaSeleccionada] && configuracionCategorias[categoriaSeleccionada].length > 0 && (
               <>
                 <h3 className="form-section-title">Características Específicas</h3>
                 <div className="grid-2-cols">
@@ -132,13 +171,12 @@ const FormularioProducto = () => {
                     <div className="input-group" key={index}>
                       <label>{campo.label}</label>
                       
-                      {/* Renderizado condicional según el tipo de campo */}
                       {campo.tipo === 'text' && (
-                        <input type="text" name={campo.nombre} placeholder={campo.placeholder} onChange={handleDetalleChange} />
+                        <input type="text" name={campo.nombre} value={detallesTecnicos[campo.nombre] || ''} placeholder={campo.placeholder} onChange={handleDetalleChange} />
                       )}
                       
                       {campo.tipo === 'select' && (
-                        <select name={campo.nombre} onChange={handleDetalleChange}>
+                        <select name={campo.nombre} value={detallesTecnicos[campo.nombre] || ''} onChange={handleDetalleChange}>
                           <option value="">-- Seleccionar --</option>
                           {campo.opciones.map(opc => <option key={opc} value={opc}>{opc}</option>)}
                         </select>
@@ -166,7 +204,9 @@ const FormularioProducto = () => {
               </>
             )}
 
-            <button type="submit" className="btn-submit">Guardar Producto</button>
+            <button type="submit" className="btn-submit">
+              {productoAEditar ? 'Guardar Cambios' : 'Registrar Producto'}
+            </button>
           </>
         )}
       </form>

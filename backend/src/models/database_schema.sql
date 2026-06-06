@@ -67,14 +67,6 @@ CREATE TABLE detalle_ventas (
     FOREIGN KEY (producto_id) REFERENCES productos(id)
 );
 
--- Para el control de acceso:
-ALTER TABLE usuarios ADD COLUMN estado ENUM('pendiente', 'aprobado', 'rechazado') DEFAULT 'pendiente';
-
--- Para la recuperación de contraseña:
-ALTER TABLE usuarios ADD COLUMN codigo_recuperacion VARCHAR(6);
-ALTER TABLE usuarios 
-ADD COLUMN expira_codigo DATETIME DEFAULT (NOW() + INTERVAL 15 MINUTE);
-
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
