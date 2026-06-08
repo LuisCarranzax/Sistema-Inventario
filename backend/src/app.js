@@ -2,8 +2,12 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config({ path: '../.env' }); // Asegura que lea el archivo .env en la raíz del backend
 const db = require('./config/db');
-const authRoutes = require('./routes/authRoutes');
 const app = express();
+
+
+const authRoutes = require('./routes/authRoutes');
+const productoRoutes = require('./routes/productoRoutes');
+const servicioRoutes = require('./routes/servicioRoutes');
 
 // Middlewares
 app.use(cors()); // Permite peticiones cruzadas desde el frontend
@@ -20,12 +24,10 @@ db.getConnection()
         console.error('Error al conectar a la base de datos MySQL:', err.message);
     });
 
-// Importación de rutas
-const productoRoutes = require('./routes/productoRoutes');
-// const authRoutes = require('./routes/authRoutes'); // Descomentar cuando crees el archivo de rutas de autenticación
 
 // Montaje de rutas (Endpoints base)
 app.use('/api/productos', productoRoutes);
+app.use('/api/servicios', servicioRoutes);
 app.use('/api/auth', authRoutes);
 
 // Ruta de comprobación de salud del servidor (Health check)

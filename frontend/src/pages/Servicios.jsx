@@ -1,0 +1,483 @@
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
+import FormularioServicio from '../components/servicios/FormularioServicio';
+import { FiPlus, FiArrowLeft, FiTrash2, FiCheckCircle, FiTool, FiAlertCircle } from 'react-icons/fi';
+import '../css/Servicios.css';
+import { useToast } from '../context/ToastContext';
+
+const Servicios = () => {
+  const { showToast } = useToast();
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [servicios, setServicios] = useState([]);
+  const [filtroEstado, setFiltroEstado] = useState('Todos');
+  const [filtroEquipo, setFiltroEquipo] = useState('Todos');
+  const [filtroPago, setFiltroPago] = useState('Todos');
+  const [confirmarEliminar, setConfirmarEliminar] = useState(null);
+  const [servicioDetalle, setServicioDetalle] = useState(null);
+
+  // ESTADOS PARA LA EDICIÓN DE PAGO EN EL MODAL
+  const [editPagoEstado, setEditPagoEstado] = useState('cancelado');
+  const [editPagoMetodo, setEditPagoMetodo] = useState('Efectivo');
+  const [editPagoAdelanto, setEditPagoAdelanto] = useState('');
+
+  const handleVerDetalles = (serv) => {
+    setServicioDetalle(serv);
+    setEditPagoEstado(serv.estado_pago);
+    setEditPagoMetodo(serv.metodo_pago === 'Por definir' ? 'Efectivo' : serv.metodo_pago);
+    setEditPagoAdelanto(serv.monto_adelanto || '');
+  };
+
+  const handleActualizarPago = async () => {
+    try {
+      await api.put(`/servicios/${servicioDetalle.id}/pago`, {
+        estado_pago: editPagoEstado,
+        metodo_pago: editPagoMetodo,
+        monto_adelanto: editPagoEstado === 'a_cuenta' ? Number(editPagoAdelanto) : 0
+      });
+      showToast("Información de pago actualizada correctamente.", "success");
+      setServicioDetalle(prev => ({
+        ...prev,
+        estado_pago: editPagoEstado,
+        metodo_pago: editPagoMetodo,
+        monto_adelanto: editPagoEstado === 'a_cuenta' ? Number(editPagoAdelanto) : 0
+      }));
+      cargarServicios();
+    } catch (error) {
+      console.error("Error al actualizar pago:", error);
+      showToast("Error al actualizar la información de pago.", "error");
+    }
+  };
+
+
+  // Diccionario para mapear los nombres del filtro con los de la Base de Datos
+  const mapeoEstados = {
+    'En Revisión': 'en_revision',
+    'Reparados': 'reparado',
+    'Entregados': 'entregado',
+    'Agendados': 'agendado',
+    'Instalados': 'instalado'
+  };
+
+  useEffect(() => {
+    if (!mostrarFormulario) {
+      cargarServicios();
+    }
+  }, [mostrarFormulario]);
+
+  const cargarServicios = async () => {
+    try {
+      const response = await api.get('/servicios');
+      setServicios(response.data);
+    } catch (error) {
+      console.error("Error al cargar servicios:", error);
+    }
+  };
+
+  const renderServicioRealizado = (texto) => {
+    if (!texto) return '';
+    const match = texto.match(/^\[([\s\S]*?)\](?:\s*Detalles:\s*([\s\S]*))?$/i);
+    
+    if (match) {
+      const serviciosString = match[1] ? match[1].trim() : '';
+      const servicios = serviciosString ? serviciosString.split(',').map(s => s.trim()).filter(Boolean) : [];
+      const detalles = match[2] ? match[2].trim() : '';
+
+      return (
+        <div className="servicio-realizar-cell">
+          {servicios.length > 0 && (
+            <div className="servicio-tags">
+              {servicios.map((s, idx) => (
+                <span key={idx} className="servicio-tag-badge">
+                  {s}
+                </span>
+              ))}
+            </div>
+          )}
+          {detalles && (
+            <div className="servicio-detalles-text">
+              <strong>Detalles:</strong> {detalles}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return <div className="servicio-realizar-cell">{texto}</div>;
+  };
+
+  const cambiarEstado = async (id, nuevoEstado) => {
+    try {
+      await api.put(`/servicios/${id}/estado`, { estado: nuevoEstado });
+      showToast(`Estado actualizado a "${nuevoEstado.replace('_', ' ')}"`, 'success');
+      cargarServicios(); // Recargamos para ver el cambio de color
+    } catch (error) {
+      showToast("Error al cambiar estado", 'error');
+    }
+  };
+
+  const handleEliminarClick = (id, cliente) => {
+    setConfirmarEliminar({ id, cliente });
+  };
+
+  const ejecutarEliminar = async () => {
+    if (!confirmarEliminar) return;
+    const { id, cliente } = confirmarEliminar;
+    try {
+      await api.delete(`/servicios/${id}`);
+      showToast(`Servicio de "${cliente}" eliminado correctamente`, 'success');
+      setConfirmarEliminar(null);
+      cargarServicios();
+    } catch (error) {
+      showToast("Error al eliminar el servicio", 'error');
+    }
+  };
+
+  // Lógica de filtrado combinada (Estado, Equipo, Pago)
+  const serviciosFiltrados = servicios.filter(serv => {
+    const matchesEstado = filtroEstado === 'Todos' || serv.estado === mapeoEstados[filtroEstado];
+    const matchesEquipo = filtroEquipo === 'Todos' || (serv.equipo_dispositivo && serv.equipo_dispositivo.startsWith(filtroEquipo));
+    const matchesPago = filtroPago === 'Todos' || serv.estado_pago === filtroPago;
+    return matchesEstado && matchesEquipo && matchesPago;
+  });
+
+  return (
+    <div className="inventario-container">
+      
+      <div className="inventario-header">
+        <h1>{mostrarFormulario ? 'Registrar Ingreso de Equipo' : 'Gestión de Taller y Servicios'}</h1>
+        
+        {mostrarFormulario ? (
+          <button className="btn-filtro" onClick={() => setMostrarFormulario(false)}>
+            <FiArrowLeft /> Volver a la lista
+          </button>
+        ) : (
+          <button className="btn-nuevo" onClick={() => setMostrarFormulario(true)}>
+            <FiPlus size={20} /> Nuevo Ingreso
+          </button>
+        )}
+      </div>
+
+      {mostrarFormulario ? (
+        // Reutilizamos el formulario dinámico que creaste antes
+        <FormularioServicio cerrarFormulario={() => setMostrarFormulario(false)} recargarTabla={cargarServicios} />
+      ) : (
+        <>
+          {/* BARRA DE FILTROS EN GRUPO (DROPDOWNS) */}
+          <div className="filtros-dropdowns-bar">
+            <div className="filtro-select-group">
+              <label>Estado del Servicio</label>
+              <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
+                <option value="Todos">🔄 Todos los estados</option>
+                <option value="En Revisión">🔍 En Revisión</option>
+                <option value="Reparados">🔧 Reparados</option>
+                <option value="Entregados">📦 Entregados</option>
+                <option value="Agendados">📅 Agendados</option>
+                <option value="Instalados">✅ Instalados</option>
+              </select>
+            </div>
+
+            <div className="filtro-select-group">
+              <label>Tipo de Equipo</label>
+              <select value={filtroEquipo} onChange={(e) => setFiltroEquipo(e.target.value)}>
+                <option value="Todos">💻 Todos los equipos</option>
+                <option value="Computadora / Laptop">💻 Computadora / Laptop</option>
+                <option value="Impresora">🖨️ Impresora</option>
+                <option value="Cámaras de Seguridad">📹 Cámaras de Seguridad</option>
+              </select>
+            </div>
+
+            <div className="filtro-select-group">
+              <label>Estado de Pago</label>
+              <select value={filtroPago} onChange={(e) => setFiltroPago(e.target.value)}>
+                <option value="Todos">💳 Todos los pagos</option>
+                <option value="pendiente">🔴 Pendiente</option>
+                <option value="a_cuenta">🟡 A Cuenta</option>
+                <option value="cancelado">🟢 Cancelado</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="hint-text">
+            <span>💡 Consejo: Selecciona cualquier fila de la tabla para ver el resumen financiero y detalles del servicio técnico.</span>
+          </div>
+
+          {/* TABLA PRINCIPAL */}
+          <div className="tabla-wrapper">
+            <table className="tabla-inventario">
+              <thead>
+                <tr>
+                  <th>Ticket</th>
+                  <th>Cliente</th>
+                  <th>Equipo</th>
+                  <th>Servicio a Realizar</th>
+                  <th>Precio</th>
+                  <th>Estado</th>
+                  <th>Pago</th>
+                  <th>Ingreso</th>
+                  <th>Acciones Rápidas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {serviciosFiltrados.length > 0 ? (
+                  serviciosFiltrados.map((serv) => (
+                    <tr key={serv.id} onClick={() => handleVerDetalles(serv)} style={{ cursor: 'pointer' }}>
+                      <td style={{ fontWeight: 'bold', color: '#64748B' }}>#{serv.id}</td>
+                      <td style={{ fontWeight: 'bold' }}>{serv.cliente_nombre}</td>
+                      <td>{serv.equipo_dispositivo}</td>
+                      <td style={{ fontSize: '0.85rem' }}>{renderServicioRealizado(serv.servicio_realizado)}</td>
+                      <td style={{ color: '#059669', fontWeight: 'bold' }}>S/ {Number(serv.precio).toFixed(2)}</td>
+                      <td>
+                        <span className={`estado-badge ${
+                          serv.estado === 'en_revision' ? 'estado-revision' :
+                          serv.estado === 'reparado' ? 'estado-reparado' :
+                          serv.estado === 'entregado' ? 'estado-entregado' :
+                          serv.estado === 'agendado' ? 'estado-agendado' : 'estado-instalado'
+                        }`}>
+                          {serv.estado.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`pago-badge ${serv.estado_pago === 'pendiente' ? 'pago-pendiente' :
+                          serv.estado_pago === 'a_cuenta' ? 'pago-a_cuenta' : 'pago-cancelado'
+                        }`}>
+                          {serv.estado_pago === 'pendiente' ? 'Pendiente' :
+                            serv.estado_pago === 'a_cuenta' ? `A Cuenta (${serv.metodo_pago})` : `Cancelado (${serv.metodo_pago})`}
+                        </span>
+                      </td>
+                      <td style={{ fontSize: '0.85rem' }}>{new Date(serv.fecha_ingreso).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                      
+                      <td onClick={(e) => e.stopPropagation()}>
+                        {/* Botones de acción rápida para el Taller */}
+                        <div className="acciones-col">
+                          {serv.equipo_dispositivo && serv.equipo_dispositivo.startsWith('Cámaras de Seguridad') && serv.estado === 'agendado' && (
+                            <button className="btn-estado-listo" title="Marcar como Instalado" onClick={() => cambiarEstado(serv.id, 'instalado')}>
+                              <FiCheckCircle size={14} /> Instalar
+                            </button>
+                          )}
+
+                          {serv.estado === 'en_revision' && (
+                            <button className="btn-estado" title="Marcar como Listo" onClick={() => cambiarEstado(serv.id, 'listo')}>
+                              <FiTool color="#166534" /> Listo
+                            </button>
+                          )}
+
+                          {serv.estado === 'listo' && (
+                            <button className="btn-estado" title="Marcar como Entregado" onClick={() => cambiarEstado(serv.id, 'entregado')}>
+                              <FiCheckCircle color="#475569" /> Entregar
+                            </button>
+                          )}
+
+                          <button className="btn-accion btn-eliminar" title="Eliminar" onClick={() => handleEliminarClick(serv.id, serv.cliente_nombre)}>
+                            <FiTrash2 size={16} />
+                          </button>
+                          
+                          
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="8" style={{ textAlign: 'center', padding: '30px' }}>
+                      No hay servicios registrados en esta categoría.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* Modal de Confirmación de Eliminación */}
+      {confirmarEliminar && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <FiAlertCircle size={40} className="modal-warning-icon" />
+              <h2>¿Confirmar eliminación?</h2>
+            </div>
+            <p>
+              ¿Estás seguro de que deseas eliminar el servicio técnico registrado de <strong>"{confirmarEliminar.cliente}"</strong>?
+              Esta acción no se puede deshacer.
+            </p>
+            <div className="modal-actions">
+              <button className="btn-cancelar" onClick={() => setConfirmarEliminar(null)}>
+                Cancelar
+              </button>
+              <button className="btn-confirmar-eliminar" onClick={ejecutarEliminar}>
+                Eliminar Registro
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Detalles del Servicio */}
+      {servicioDetalle && (
+        <div className="modal-overlay" onClick={() => setServicioDetalle(null)}>
+          <div className="modal-content modal-detalles-servicio" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-detalles">
+              <h2>Detalles del Servicio Técnico #{servicioDetalle.id}</h2>
+              <button className="btn-close-modal" onClick={() => setServicioDetalle(null)}>&times;</button>
+            </div>
+            
+            <div className="modal-body-detalles">
+              <div className="detalles-grid">
+                <div className="detalle-card">
+                  <h3>Información General</h3>
+                  <div className="detalle-item">
+                    <span className="detalle-label">Cliente:</span>
+                    <span className="detalle-valor">{servicioDetalle.cliente_nombre}</span>
+                  </div>
+                  <div className="detalle-item">
+                    <span className="detalle-label">Equipo:</span>
+                    <span className="detalle-valor">{servicioDetalle.equipo_dispositivo}</span>
+                  </div>
+                  <div className="detalle-item">
+                    <span className="detalle-label">Ingreso:</span>
+                    <span className="detalle-valor">
+                      {new Date(servicioDetalle.fecha_ingreso).toLocaleString('es-PE', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+                  {servicioDetalle.fecha_entrega && (
+                    <div className="detalle-item">
+                      <span className="detalle-label">Entrega:</span>
+                      <span className="detalle-valor">
+                        {new Date(servicioDetalle.fecha_entrega).toLocaleString('es-PE', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="detalle-card">
+                  <h3>Estado & Finanzas</h3>
+                  <div className="detalle-item">
+                    <span className="detalle-label">Estado Técnico:</span>
+                    <span className={`estado-badge ${
+                      servicioDetalle.estado === 'en_revision' ? 'estado-revision' :
+                      servicioDetalle.estado === 'reparado' ? 'estado-reparado' :
+                      servicioDetalle.estado === 'entregado' ? 'estado-entregado' :
+                      servicioDetalle.estado === 'agendado' ? 'estado-agendado' : 'estado-instalado'
+                    }`}>
+                      {servicioDetalle.estado.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <div className="detalle-item">
+                    <span className="detalle-label">Precio Acordado:</span>
+                    <span className="detalle-valor valor-precio">S/ {Number(servicioDetalle.precio).toFixed(2)}</span>
+                  </div>
+                  <div className="detalle-item">
+                    <span className="detalle-label">Estado de Pago:</span>
+                    <span className={`pago-badge pago-${servicioDetalle.estado_pago}`}>
+                      {servicioDetalle.estado_pago === 'pendiente' ? 'Pendiente' :
+                       servicioDetalle.estado_pago === 'a_cuenta' ? 'A Cuenta' : 'Cancelado'}
+                    </span>
+                  </div>
+                  {servicioDetalle.estado_pago === 'a_cuenta' && (
+                    <div className="detalle-item">
+                      <span className="detalle-label">Adelantado:</span>
+                      <span className="detalle-valor">S/ {Number(servicioDetalle.monto_adelanto).toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="detalle-item">
+                    <span className="detalle-label">Método de Pago:</span>
+                    <span className="detalle-valor">{servicioDetalle.metodo_pago}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="detalle-seccion-full">
+                <h3>Servicio Técnico y Tareas</h3>
+                <div className="servicio-tareas-box">
+                  {renderServicioRealizado(servicioDetalle.servicio_realizado)}
+                </div>
+              </div>
+
+              {/* Formulario rápido para cambiar el estado de pago desde el modal */}
+              {servicioDetalle.estado_pago !== 'cancelado' && (
+                <div className="pago-update-box">
+                  <h3>Registrar / Actualizar Pago</h3>
+                  <div className="pago-update-form">
+                    <div className="input-group-pago">
+                      <label>Estado del Pago</label>
+                      <select 
+                        value={editPagoEstado} 
+                        onChange={(e) => {
+                          setEditPagoEstado(e.target.value);
+                          if (e.target.value === 'pendiente') setEditPagoMetodo('Por definir');
+                          else if (editPagoMetodo === 'Por definir') setEditPagoMetodo('Efectivo');
+                        }}
+                      >
+                        <option value="cancelado">Cancelado (Completo)</option>
+                        <option value="a_cuenta">A Cuenta (Adelanto)</option>
+                        <option value="pendiente">Pendiente</option>
+                      </select>
+                    </div>
+
+                    {editPagoEstado === 'a_cuenta' && (
+                      <div className="input-group-pago">
+                        <label>Monto Adelanto (S/)</label>
+                        <input 
+                          type="number" 
+                          step="0.10" 
+                          value={editPagoAdelanto} 
+                          onChange={(e) => setEditPagoAdelanto(e.target.value)} 
+                          placeholder="0.00" 
+                        />
+                      </div>
+                    )}
+
+                    <div className="input-group-pago">
+                      <label>Método de Pago</label>
+                      <select 
+                        value={editPagoMetodo} 
+                        onChange={(e) => setEditPagoMetodo(e.target.value)} 
+                        disabled={editPagoEstado === 'pendiente'}
+                      >
+                        {editPagoEstado === 'pendiente' ? (
+                          <option value="Por definir">Por definir</option>
+                        ) : (
+                          <>
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Yape">Yape</option>
+                            <option value="Plin">Plin</option>
+                            <option value="Transferencia">Transferencia Bancaria</option>
+                          </>
+                        )}
+                      </select>
+                    </div>
+
+                    <button className="btn-actualizar-pago" onClick={handleActualizarPago}>
+                      Actualizar Pago
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn-cancelar" onClick={() => setServicioDetalle(null)}>
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Servicios;

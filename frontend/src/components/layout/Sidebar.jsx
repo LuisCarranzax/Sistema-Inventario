@@ -1,7 +1,13 @@
 import React, { useState, useContext } from 'react';
 import { NavLink } from 'react-router-dom';
-import { FiMenu, FiHome, FiBox, FiShoppingCart, FiTrendingUp, FiLogOut } from 'react-icons/fi';
-import { AuthContext } from '../../context/authContext';
+import { FiMenu, 
+  FiHome, 
+  FiBox, 
+  FiShoppingCart, 
+  FiTrendingUp, 
+  FiLogOut, 
+  FiTool } 
+from 'react-icons/fi';import { AuthContext } from '../../context/authContext';
 import './Layout.css';
 
 const Sidebar = () => {
@@ -37,6 +43,11 @@ const Sidebar = () => {
         <NavLink to="/inventario" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
           <FiBox className="nav-icon" />
           <span className="nav-text">Inventario</span>
+        </NavLink>
+
+        <NavLink to="/servicios" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+          <FiTool className="nav-icon" />
+          <span className="nav-text">Servicio Técnico</span>
         </NavLink>
 
         <NavLink to="/punto-venta" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>

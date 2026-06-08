@@ -8,6 +8,7 @@ import UpdatePassword from './pages/auth/UpdatePassword';
 import Dashboard from './pages/Dashboard';
 import PuntoVenta from './pages/PuntoVenta';
 import Inventario from './pages/Inventario';
+import Servicios from './pages/Servicios';
 
 // IMPORTACIÓN DEL LAYOUT (La pieza que faltaba)
 import Layout from './components/layout/Layout';
@@ -38,7 +39,7 @@ function App() {
             {/* Las demás páginas se mostrarán dentro del hueco que deja el Layout */}
             <Route path="punto-venta" element={<PuntoVenta />} />
             <Route path="inventario" element={<Inventario />} />
-
+            <Route path="servicios" element={<Servicios />} />
           </Route>
 
           {/* Ruta por defecto (opcional): Si el usuario escribe una URL que no existe */}

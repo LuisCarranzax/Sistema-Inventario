@@ -81,3 +81,21 @@ CREATE TABLE usuarios (
     expira_codigo DATETIME DEFAULT (NOW() + INTERVAL 15 MINUTE),
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE servicios_tecnicos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cliente_nombre VARCHAR(150) NOT NULL,
+    equipo_dispositivo VARCHAR(100) NOT NULL, -- Ej: Laptop HP Pavilion, Impresora Epson
+    servicio_realizado TEXT NOT NULL,         -- Ej: Cambio de pantalla, limpieza
+    precio DECIMAL(10,2) NOT NULL,
+    estado ENUM('en_revision', 'reparado', 'entregado') DEFAULT 'en_revision',
+    fecha_ingreso DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fecha_entrega DATETIME NULL,
+    usuario_id INT NOT NULL,                  -- Para saber qué trabajador lo registró
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+ALTER TABLE servicios_tecnicos 
+ADD COLUMN estado_pago ENUM('pendiente', 'a_cuenta', 'cancelado') DEFAULT 'pendiente' AFTER precio,
+ADD COLUMN monto_adelanto DECIMAL(10,2) DEFAULT 0.00 AFTER estado_pago,
+ADD COLUMN metodo_pago VARCHAR(50) DEFAULT 'Por definir' AFTER monto_adelanto;

@@ -1,0 +1,472 @@
+@import './Inventario.css';
+
+.estado-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.estado-revision { background-color: #FEF08A; color: #854D0E; } /* Amarillo */
+.estado-reparado { background-color: #BBF7D0; color: #166534; } /* Verde Claro */
+.estado-entregado { background-color: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; } /* Verde Esmeralda (Completado) */
+
+.btn-estado {
+  background-color: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  color: #333;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.8rem;
+  margin-right: 5px;
+}
+
+.btn-estado:hover {
+  background-color: #E2E8F0;
+}
+
+/* Estilos para celdas de Servicios a Realizar */
+.servicio-realizar-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 300px;
+  padding: 4px 0;
+}
+
+.servicio-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.servicio-tag-badge {
+  background-color: #EFF6FF; /* Azul sutil */
+  color: #1E40AF;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid #DBEAFE;
+  white-space: nowrap;
+}
+
+.servicio-detalles-text {
+  color: #64748B;
+  font-size: 0.8rem;
+  margin-top: 2px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.servicio-detalles-text strong {
+  color: #475569;
+}
+
+/* Rediseño de Botones de Acción Rápida (Taller) */
+.btn-estado-listo {
+  background-color: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #065F46;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.05);
+}
+
+.btn-estado-listo:hover {
+  background-color: #10B981;
+  border-color: #10B981;
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.15);
+}
+
+.btn-estado-listo svg {
+  transition: transform 0.2s ease-in-out;
+}
+
+.btn-estado-listo:hover svg {
+  transform: rotate(15deg) scale(1.1);
+  color: white !important;
+}
+
+.btn-estado-entregar {
+  background-color: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  color: #1E40AF;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 1px 2px rgba(59, 130, 246, 0.05);
+}
+
+.btn-estado-entregar:hover {
+  background-color: #3B82F6;
+  border-color: #3B82F6;
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.15);
+}
+
+.btn-estado-entregar svg {
+  transition: transform 0.2s ease-in-out;
+}
+
+.btn-estado-entregar:hover svg {
+  transform: scale(1.1);
+  color: white !important;
+}
+
+/* Nuevos Badges de Estado (Cámaras) */
+.estado-agendado { background-color: #EEF2F6; color: #4F46E5; border: 1px solid #E0E7FF; } /* Violeta/Indigo */
+.estado-instalado { background-color: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; } /* Esmeralda/Verde */
+
+/* Badges del Estado del Pago */
+.pago-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  display: inline-block;
+  text-transform: uppercase;
+}
+.pago-pendiente { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+.pago-a_cuenta { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+.pago-cancelado { background-color: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
+
+/* Modal de Detalles del Servicio */
+.modal-detalles-servicio {
+  width: 95% !important;
+  max-width: 650px !important;
+  text-align: left !important;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 16px !important;
+  padding: 24px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+.modal-header-detalles {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #F1F5F9;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.modal-header-detalles h2 {
+  font-size: 1.35rem;
+  color: #0F172A;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  cursor: pointer;
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, transform 0.2s;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.btn-close-modal:hover {
+  color: #0F172A;
+  background-color: #F1F5F9;
+  transform: rotate(90deg);
+}
+
+.modal-body-detalles {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Grid Layout for details */
+.detalles-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 580px) {
+  .detalles-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detalle-card {
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.detalle-card h3 {
+  font-size: 0.82rem;
+  color: #475569;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+  border-bottom: 2px solid #E2E8F0;
+  padding-bottom: 6px;
+}
+
+.detalle-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #F1F5F9;
+  font-size: 0.9rem;
+}
+
+.detalle-item:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.detalle-label {
+  color: #64748B;
+  font-weight: 500;
+}
+
+.detalle-valor {
+  color: #0F172A;
+  font-weight: 600;
+  text-align: right;
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detalle-valor.valor-precio {
+  color: #059669;
+  font-size: 0.95rem;
+}
+
+/* Full Width Section for tasks */
+.detalle-seccion-full h3 {
+  font-size: 0.82rem;
+  color: #475569;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+}
+
+.servicio-tareas-box {
+  background-color: #FFF;
+  border: 1px dashed #CBD5E1;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* Registrar / Actualizar Pago */
+.pago-update-box {
+  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+  border: 1px solid #E2E8F0;
+  border-left: 5px solid #2563EB;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.pago-update-box h3 {
+  font-size: 0.85rem;
+  color: #1E3A8A;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+}
+
+.pago-update-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.input-group-pago {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-group-pago label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.input-group-pago select,
+.input-group-pago input {
+  padding: 8px 12px;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background-color: #FFF;
+  color: #334155;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.input-group-pago select:focus,
+.input-group-pago input:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.btn-actualizar-pago {
+  background-color: #2563EB;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.15);
+}
+
+.btn-actualizar-pago:hover {
+  background-color: #1D4ED8;
+  box-shadow: 0 6px 12px -2px rgba(37, 99, 235, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-actualizar-pago:active {
+  transform: translateY(0);
+}
+
+/* Mensaje Informativo (Hint) */
+.hint-text {
+  font-size: 0.85rem;
+  color: #64748B;
+  margin-bottom: 15px;
+  padding: 8px 12px;
+  background-color: #F8FAFC;
+  border-left: 3px solid #3B82F6;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+/* Barra de Filtros Dropdown */
+.filtros-dropdowns-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  background-color: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.filtro-select-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 180px;
+}
+
+.filtro-select-group label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filtro-select-group select {
+  padding: 10px 14px;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background-color: #FFF;
+  color: #334155;
+  outline: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.filtro-select-group select:focus {
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+/* Scrollbar y Alto Máximo para la Tabla de Servicios */
+.tabla-wrapper {
+  max-height: 550px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.tabla-inventario thead th {
+  position: sticky;
+  top: 0;
+  background-color: #F8FAFC;
+  z-index: 10;
+  box-shadow: inset 0 -1px 0 #E2E8F0;
+}
+
+/* Barra de Scroll Personalizada */
+.tabla-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.tabla-wrapper::-webkit-scrollbar-track {
+  background: #F1F5F9;
+  border-radius: 10px;
+}
+
+.tabla-wrapper::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 10px;
+  border: 2px solid #F1F5F9;
+}
+
+.tabla-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}

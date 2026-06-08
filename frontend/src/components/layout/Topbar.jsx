@@ -32,7 +32,7 @@ const Topbar = () => {
             <FiUser />
           </div>
           <span style={{ fontSize: '0.9rem', fontWeight: '500', color: '#1E293B' }}>
-            {user?.nombre || 'Administrador'}
+            {user?.nombre || 'Administrador' }
           </span>
         </div>
       </div>
