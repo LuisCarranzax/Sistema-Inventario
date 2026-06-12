@@ -19,12 +19,14 @@ const Servicios = () => {
   const [editPagoEstado, setEditPagoEstado] = useState('cancelado');
   const [editPagoMetodo, setEditPagoMetodo] = useState('Efectivo');
   const [editPagoAdelanto, setEditPagoAdelanto] = useState('');
+  const [editEstado, setEditEstado] = useState('');
 
   const handleVerDetalles = (serv) => {
     setServicioDetalle(serv);
     setEditPagoEstado(serv.estado_pago);
     setEditPagoMetodo(serv.metodo_pago === 'Por definir' ? 'Efectivo' : serv.metodo_pago);
     setEditPagoAdelanto(serv.monto_adelanto || '');
+    setEditEstado(serv.estado);
   };
 
   const handleActualizarPago = async () => {
@@ -45,6 +47,22 @@ const Servicios = () => {
     } catch (error) {
       console.error("Error al actualizar pago:", error);
       showToast("Error al actualizar la información de pago.", "error");
+    }
+  };
+
+  const handleActualizarEstado = async () => {
+    try {
+      await api.put(`/servicios/${servicioDetalle.id}/estado`, { estado: editEstado });
+      showToast("Estado del servicio actualizado correctamente.", "success");
+      setServicioDetalle(prev => ({
+        ...prev,
+        estado: editEstado,
+        fecha_entrega: editEstado === 'entregado' ? new Date().toISOString() : prev.fecha_entrega
+      }));
+      cargarServicios();
+    } catch (error) {
+      console.error("Error al actualizar estado:", error);
+      showToast("Error al actualizar el estado del servicio.", "error");
     }
   };
 
@@ -254,24 +272,9 @@ const Servicios = () => {
                               <FiCheckCircle size={14} /> Instalar
                             </button>
                           )}
-
-                          {serv.estado === 'en_revision' && (
-                            <button className="btn-estado" title="Marcar como Listo" onClick={() => cambiarEstado(serv.id, 'listo')}>
-                              <FiTool color="#166534" /> Listo
-                            </button>
-                          )}
-
-                          {serv.estado === 'listo' && (
-                            <button className="btn-estado" title="Marcar como Entregado" onClick={() => cambiarEstado(serv.id, 'entregado')}>
-                              <FiCheckCircle color="#475569" /> Entregar
-                            </button>
-                          )}
-
                           <button className="btn-accion btn-eliminar" title="Eliminar" onClick={() => handleEliminarClick(serv.id, serv.cliente_nombre)}>
                             <FiTrash2 size={16} />
                           </button>
-                          
-                          
                         </div>
                       </td>
                     </tr>
@@ -462,6 +465,40 @@ const Servicios = () => {
 
                     <button className="btn-actualizar-pago" onClick={handleActualizarPago}>
                       Actualizar Pago
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Formulario rápido para cambiar el estado técnico desde el modal */}
+              {servicioDetalle.estado !== 'entregado' && servicioDetalle.estado !== 'instalado' && (
+                <div className="estado-update-box">
+                  <h3>Actualizar Estado del Servicio</h3>
+                  <div className="pago-update-form">
+                    <div className="input-group-pago">
+                      <label>Estado Técnico</label>
+                      <select 
+                        value={editEstado} 
+                        onChange={(e) => setEditEstado(e.target.value)}
+                      >
+                        {servicioDetalle.equipo_dispositivo && servicioDetalle.equipo_dispositivo.startsWith('Cámaras de Seguridad') ? (
+                          <>
+                            <option value="agendado">📅 Agendado</option>
+                            <option value="instalado">✅ Instalado</option>
+                            <option value="entregado">📦 Entregado</option>
+                          </>
+                        ) : (
+                          <>
+                            <option value="en_revision">🔍 En Revisión</option>
+                            <option value="reparado">🔧 Reparado</option>
+                            <option value="entregado">📦 Entregado</option>
+                          </>
+                        )}
+                      </select>
+                    </div>
+
+                    <button className="btn-actualizar-estado" onClick={handleActualizarEstado}>
+                      Actualizar Estado
                     </button>
                   </div>
                 </div>

@@ -1,0 +1,262 @@
+/* Contenedor principal dividido 60 / 40 */
+.pos-container {
+  display: flex;
+  height: calc(100vh - 80px); /* Restamos el header/topbar aproximado */
+  gap: 20px;
+  overflow: hidden;
+}
+
+/* =========================================
+   PANEL IZQUIERDO: CATÁLOGO (60%)
+   ========================================= */
+.pos-catalogo {
+  flex: 6;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.pos-busqueda input {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-bottom: 15px;
+  outline: none;
+}
+
+.pos-busqueda input:focus {
+  border-color: var(--accent-color);
+}
+
+/* Cuadrícula de Tarjetas de Productos */
+.productos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.producto-card {
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 150px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.producto-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  border-color: var(--accent-color);
+}
+
+.producto-card.agotado {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background-color: #F8FAFC;
+}
+
+.producto-card.agotado:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: #E2E8F0;
+}
+
+.prod-nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.prod-precio {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #059669; /* Verde dinero */
+}
+
+.prod-stock {
+  font-size: 0.88rem; /* Aumentado de tamaño */
+  font-weight: 600;
+  color: #475569;
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Indicador visual de stock */
+.stock-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.stock-dot.disponible {
+  background-color: #10B981; /* Verde */
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+}
+
+.stock-dot.bajo {
+  background-color: #F59E0B; /* Ámbar */
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+}
+
+.stock-dot.agotado {
+  background-color: #EF4444; /* Rojo */
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+}
+
+/* =========================================
+   PANEL DERECHO: TICKET / CARRITO (40%)
+   ========================================= */
+.pos-carrito {
+  flex: 2;
+  background: white;
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.carrito-header {
+  padding: 20px;
+  background: #F8FAFC;
+  border-bottom: 1px solid #E2E8F0;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.carrito-items {
+  flex-grow: 2;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed #E2E8F0;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+}
+
+.cart-item-info {
+  flex: 1;
+}
+
+.cart-item-controles {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-cantidad {
+  background: #EFF6FF;
+  color: var(--accent-color);
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.btn-eliminar-item {
+  background: #FEF2F2;
+  color: #EF4444;
+  border: none;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.carrito-footer {
+  padding: 20px;
+  background: #F8FAFC;
+  border-top: 1px solid #E2E8F0;
+}
+
+.totales-fila {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.pagos-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.btn-pago {
+  padding: 10px;
+  border: 1px solid #CBD5E1;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-pago.activo {
+  border-color: var(--accent-color);
+  background: #EFF6FF;
+  color: var(--accent-color);
+}
+
+.acciones-finales {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-cobrar {
+  flex: 2;
+  background: #10B981; /* Verde éxito */
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.btn-cobrar:hover { background: #059669; }
+.btn-cobrar:disabled { background: #9CA3AF; cursor: not-allowed; }
+
+.btn-proforma {
+  flex: 1;
+  background: #64748B;
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-proforma:hover { background: #475569; }

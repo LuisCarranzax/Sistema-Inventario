@@ -23,6 +23,8 @@
     "concurrently": "^9.2.1"
   },
   "dependencies": {
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "react-router": "^7.17.0"
   }
 }

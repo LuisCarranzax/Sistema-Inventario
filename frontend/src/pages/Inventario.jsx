@@ -133,7 +133,7 @@ const Inventario = () => {
                       <td>{prod.stock}</td>
                       <td>
                         <span className={`stock-badge ${prod.stock <= prod.stock_minimo ? 'stock-low' : 'stock-ok'}`}>
-                          {prod.stock <= prod.stock_minimo ? 'Bajo' : 'Óptimo'}
+                          {prod.stock === 0 ? 'Agotado' : prod.stock <= prod.stock_minimo ? 'Bajo' : 'Óptimo'}
                         </span>
                       </td>
                       {/* Mostrar la fecha de abastecimiento o registro */}

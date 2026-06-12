@@ -8,7 +8,7 @@ const app = express();
 const authRoutes = require('./routes/authRoutes');
 const productoRoutes = require('./routes/productoRoutes');
 const servicioRoutes = require('./routes/servicioRoutes');
-
+const ventaRoutes = require('./routes/ventaRoutes');
 // Middlewares
 app.use(cors()); // Permite peticiones cruzadas desde el frontend
 app.use(express.json()); // Permite que la API reciba datos en formato JSON desde el body
@@ -29,7 +29,7 @@ db.getConnection()
 app.use('/api/productos', productoRoutes);
 app.use('/api/servicios', servicioRoutes);
 app.use('/api/auth', authRoutes);
-
+app.use('/api/ventas', ventaRoutes);
 // Ruta de comprobación de salud del servidor (Health check)
 app.get('/', (req, res) => {
     res.json({ mensaje: 'API del Sistema de Gestión IT funcionando correctamente.' });
