@@ -99,3 +99,13 @@ ALTER TABLE servicios_tecnicos
 ADD COLUMN estado_pago ENUM('pendiente', 'a_cuenta', 'cancelado') DEFAULT 'pendiente' AFTER precio,
 ADD COLUMN monto_adelanto DECIMAL(10,2) DEFAULT 0.00 AFTER estado_pago,
 ADD COLUMN metodo_pago VARCHAR(50) DEFAULT 'Por definir' AFTER monto_adelanto;
+
+CREATE TABLE movimientos_inventario (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    producto_id INT NOT NULL,
+    tipo_movimiento ENUM('ingreso', 'salida', 'ajuste') NOT NULL,
+    cantidad INT NOT NULL,
+    fecha_movimiento DATETIME DEFAULT CURRENT_TIMESTAMP,
+    usuario_id INT DEFAULT 1, -- Para saber qué trabajador registró el ingreso
+    FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
+);

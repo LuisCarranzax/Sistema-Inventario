@@ -38,6 +38,13 @@ exports.registrarVenta = async (req, res) => {
                     `UPDATE productos SET stock = stock - ? WHERE id = ?`,
                     [item.cantidad, item.id]
                 );
+
+                // Registrar el movimiento de salida en movimientos_inventario
+                await connection.query(
+                    `INSERT INTO movimientos_inventario (producto_id, tipo_movimiento, cantidad) 
+                     VALUES (?, 'salida', ?)`,
+                    [item.id, item.cantidad]
+                );
             }
         }
 
@@ -54,5 +61,35 @@ exports.registrarVenta = async (req, res) => {
         res.status(500).json({ message: "Error al procesar la venta", error: error.message });
     } finally {
         connection.release(); // Liberamos la conexión
+    }
+};
+
+exports.obtenerVentas = async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                v.id AS venta_id,
+                v.cliente_nombre,
+                v.medio_pago,
+                v.es_proforma,
+                v.total,
+                v.fecha_venta,
+                dv.cantidad,
+                dv.precio_unitario,
+                dv.subtotal,
+                p.nombre AS producto_nombre
+            FROM ventas v
+            LEFT JOIN detalle_ventas dv ON v.id = dv.venta_id
+            LEFT JOIN productos p ON dv.producto_id = p.id
+            WHERE v.es_proforma = FALSE
+              AND MONTH(v.fecha_venta) = MONTH(CURRENT_DATE())
+              AND YEAR(v.fecha_venta) = YEAR(CURRENT_DATE())
+            ORDER BY v.id DESC
+        `;
+        const [ventas] = await db.query(query);
+        res.json(ventas);
+    } catch (error) {
+        console.error("Error al obtener ventas:", error);
+        res.status(500).json({ message: "Error en el servidor", error: error.message });
     }
 };

@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import PuntoVenta from './pages/PuntoVenta';
 import Inventario from './pages/Inventario';
 import Servicios from './pages/Servicios';
+import Analiticas from './pages/Analiticas';
 
 // IMPORTACIÓN DEL LAYOUT (La pieza que faltaba)
 import Layout from './components/layout/Layout';
@@ -40,6 +41,7 @@ function App() {
             <Route path="punto-venta" element={<PuntoVenta />} />
             <Route path="inventario" element={<Inventario />} />
             <Route path="servicios" element={<Servicios />} />
+            <Route path="analiticas" element={<Analiticas />} />
           </Route>
 
           {/* Ruta por defecto (opcional): Si el usuario escribe una URL que no existe */}

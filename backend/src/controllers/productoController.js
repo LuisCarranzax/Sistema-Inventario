@@ -6,9 +6,12 @@ exports.obtenerProductos = async (req, res) => {
     try {
         // Usamos un JOIN para traer el nombre de la categoría en lugar del número
         const query = `
-            SELECT p.*, c.nombre AS categoria_nombre 
+            SELECT p.*, c.nombre AS categoria_nombre,
+                   IFNULL(SUM(CASE WHEN mi.tipo_movimiento = 'ingreso' AND MONTH(mi.fecha_movimiento) = MONTH(CURRENT_DATE()) AND YEAR(mi.fecha_movimiento) = YEAR(CURRENT_DATE()) THEN mi.cantidad ELSE 0 END), 0) AS cantidad_ingresada
             FROM productos p
             JOIN categorias c ON p.categoria_id = c.id
+            LEFT JOIN movimientos_inventario mi ON p.id = mi.producto_id
+            GROUP BY p.id, c.nombre
             ORDER BY p.id DESC
         `;
         
@@ -29,7 +32,7 @@ exports.registrarProducto = async (req, res) => {
         categoria, // El nombre en texto que llega del select de React (Ej: 'Mouse')
         detalles_tecnicos 
     } = req.body;
-
+    const connection = await db.getConnection();
     try {
         // 1. Buscar el ID y el prefijo de la categoría en la base de datos
         const [categoriasDb] = await db.query(
@@ -62,31 +65,36 @@ exports.registrarProducto = async (req, res) => {
 
         // 4. Inserción en la base de datos
         // Asignamos automáticamente la fecha de hoy a fecha_abastecimiento
-        const query = `
-            INSERT INTO productos 
-            (codigo_interno, nombre, precio_compra, precio_venta, stock, stock_minimo, categoria_id, detalles_tecnicos, fecha_abastecimiento) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURDATE())
-        `;
+        await connection.beginTransaction();
 
-        await db.query(query, [
-            codigoInterno, 
-            nombre, 
-            precio_compra, 
-            precio_venta, 
-            stock, 
-            stock_minimo, 
-            categoriaId, 
-            detallesJSON
+        // 1. Guardar en la tabla productos (tu código actual)
+        const queryProducto = `
+            INSERT INTO productos 
+            (codigo_interno, nombre, precio_compra, precio_venta, stock, stock_minimo, categoria_id, detalles_tecnicos) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        const [resultProducto] = await connection.query(queryProducto, [
+            codigoInterno, nombre, precio_compra, precio_venta, stock, stock_minimo, categoriaId, detallesJSON
         ]);
 
-        res.status(201).json({ 
-            message: "Producto registrado exitosamente.",
-            codigo: codigoInterno
-        });
+        const nuevoProductoId = resultProducto.insertId;
+
+        // 2. NUEVO: Registrar el ingreso en la bitácora inmutable
+        const queryMovimiento = `
+            INSERT INTO movimientos_inventario (producto_id, tipo_movimiento, cantidad) 
+            VALUES (?, 'ingreso', ?)
+        `;
+        await connection.query(queryMovimiento, [nuevoProductoId, stock]);
+
+        await connection.commit();
+        res.status(201).json({ message: "Producto registrado exitosamente.", codigo: codigoInterno });
 
     } catch (error) {
+        await connection.rollback();
         console.error("Error al guardar producto:", error);
         res.status(500).json({ message: "Error interno del servidor", error: error.message });
+    } finally {
+        connection.release();
     }
 };
 
@@ -112,19 +120,28 @@ exports.actualizarProducto = async (req, res) => {
         detalles_tecnicos 
     } = req.body;
 
+    const connection = await db.getConnection();
     try {
+        await connection.beginTransaction();
+
         // 1. Buscamos el ID de la nueva categoría seleccionada
-        const [categoriasDb] = await db.query(
+        const [categoriasDb] = await connection.query(
             'SELECT id FROM categorias WHERE nombre = ?', 
             [categoria]
         );
 
         if (categoriasDb.length === 0) {
+            connection.release();
             return res.status(404).json({ message: "La categoría no existe." });
         }
 
         const categoriaId = categoriasDb[0].id;
         const detallesJSON = JSON.stringify(detalles_tecnicos || {});
+
+        // 1.5 Obtener stock anterior para registrar la bitácora
+        const [productoAnterior] = await connection.query('SELECT stock FROM productos WHERE id = ?', [id]);
+        const stockAnterior = productoAnterior[0]?.stock || 0;
+        const diferencia = Number(stock) - Number(stockAnterior);
 
         // 2. Actualizamos el producto en MySQL
         const query = `
@@ -139,7 +156,7 @@ exports.actualizarProducto = async (req, res) => {
             WHERE id = ?
         `;
 
-        await db.query(query, [
+        await connection.query(query, [
             nombre, 
             precio_compra, 
             precio_venta, 
@@ -150,10 +167,61 @@ exports.actualizarProducto = async (req, res) => {
             id
         ]);
 
+        // 3. Registrar el movimiento si hubo variación de stock
+        if (diferencia !== 0) {
+            const tipoMov = diferencia > 0 ? 'ingreso' : 'salida';
+            const cantMov = Math.abs(diferencia);
+            await connection.query(
+                `INSERT INTO movimientos_inventario (producto_id, tipo_movimiento, cantidad) 
+                 VALUES (?, ?, ?)`,
+                [id, tipoMov, cantMov]
+            );
+        }
+
+        await connection.commit();
         res.json({ message: "Producto actualizado correctamente." });
 
     } catch (error) {
+        await connection.rollback();
         console.error("Error al actualizar producto:", error);
         res.status(500).json({ message: "Error interno del servidor", error: error.message });
+    } finally {
+        connection.release();
+    }
+};
+
+exports.reabastecerProducto = async (req, res) => {
+    const { id } = req.params;
+    const { cantidad } = req.body;
+
+    if (!cantidad || Number(cantidad) <= 0) {
+        return res.status(400).json({ message: "Cantidad inválida para reabastecer." });
+    }
+
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        // 1. Aumentamos el stock
+        await connection.query(
+            'UPDATE productos SET stock = stock + ? WHERE id = ?',
+            [Number(cantidad), id]
+        );
+
+        // 2. Registramos el movimiento en la bitácora
+        await connection.query(
+            `INSERT INTO movimientos_inventario (producto_id, tipo_movimiento, cantidad) 
+             VALUES (?, 'ingreso', ?)`,
+            [id, Number(cantidad)]
+        );
+
+        await connection.commit();
+        res.json({ message: "Stock reabastecido correctamente." });
+    } catch (error) {
+        await connection.rollback();
+        console.error("Error al reabastecer producto:", error);
+        res.status(500).json({ message: "Error al reabastecer el producto", error: error.message });
+    } finally {
+        connection.release();
     }
 };

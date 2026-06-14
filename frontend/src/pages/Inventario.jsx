@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import FormularioProducto from '../components/inventario/FormularioProducto';
-import { FiPlus, FiArrowLeft, FiEdit, FiTrash2, FiAlertCircle } from 'react-icons/fi';
+import { FiPlus, FiArrowLeft, FiEdit, FiTrash2, FiAlertCircle, FiPlusCircle } from 'react-icons/fi';
 import { useToast } from '../context/ToastContext';
 import '../css/Inventario.css';
 
@@ -15,6 +15,8 @@ const Inventario = () => {
 
   const { showToast } = useToast();
   const [confirmarEliminar, setConfirmarEliminar] = useState(null);
+  const [reabastecerProducto, setReabastecerProducto] = useState(null);
+  const [cantidadReabastecer, setCantidadReabastecer] = useState('');
 
   const categoriasFiltro = ['Todos', 'Cargadores', 'Mouse', 'Mousepad', 'Cables PC'];
 
@@ -68,6 +70,26 @@ const Inventario = () => {
     } catch (error) {
       console.error("Error al eliminar:", error);
       showToast('Ocurrió un error al intentar eliminar el producto.', 'error');
+    }
+  };
+
+  const ejecutarReabastecimiento = async () => {
+    if (!reabastecerProducto) return;
+    const { id, nombre } = reabastecerProducto;
+    const cantidad = Number(cantidadReabastecer);
+
+    if (isNaN(cantidad) || cantidad <= 0) {
+      return showToast("Ingresa una cantidad válida mayor a 0", "error");
+    }
+
+    try {
+      await api.put(`/productos/${id}/reabastecer`, { cantidad });
+      showToast(`Stock de "${nombre}" reabastecido correctamente`, "success");
+      setReabastecerProducto(null);
+      cargarProductos();
+    } catch (error) {
+      console.error("Error al reabastecer:", error);
+      showToast("Ocurrió un error al intentar reabastecer el producto.", "error");
     }
   };
 
@@ -145,6 +167,14 @@ const Inventario = () => {
                           <button className="btn-accion btn-editar" title="Editar" onClick={() => handleEditar(prod)}>
                             <FiEdit size={16} />
                           </button>
+                          <button 
+                            className="btn-accion" 
+                            style={{ color: '#10B981', backgroundColor: '#ECFDF5' }} 
+                            title="Reabastecer" 
+                            onClick={() => setReabastecerProducto({ id: prod.id, nombre: prod.nombre, stock: prod.stock })}
+                          >
+                            <FiPlusCircle size={16} />
+                          </button>
                           <button className="btn-accion btn-eliminar" title="Eliminar" onClick={() => handleEliminarClick(prod.id, prod.nombre)}>
                             <FiTrash2 size={16} />
                           </button>
@@ -183,6 +213,53 @@ const Inventario = () => {
               </button>
               <button className="btn-confirmar-eliminar" onClick={ejecutarEliminar}>
                 Eliminar Producto
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Re-abastecimiento Rápido */}
+      {reabastecerProducto && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <FiPlusCircle size={40} style={{ color: '#10B981' }} />
+              <h2>Reabastecer Stock</h2>
+            </div>
+            <p style={{ fontSize: '0.9rem', color: '#475569', margin: '10px 0 20px 0' }}>
+              Ingresa la cantidad a añadir para el producto <strong>"{reabastecerProducto.nombre}"</strong>.<br />
+              <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>(Stock actual: {reabastecerProducto.stock} unidades)</span>
+            </p>
+            <div className="input-group" style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#64748B' }}>CANTIDAD A SUMAR</label>
+              <input 
+                type="number" 
+                min="1" 
+                value={cantidadReabastecer} 
+                onChange={(e) => setCantidadReabastecer(e.target.value)} 
+                placeholder="Ej: 15"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '8px',
+                  fontSize: '0.95rem',
+                  outline: 'none',
+                  marginTop: '6px'
+                }}
+              />
+            </div>
+            <div className="modal-actions">
+              <button className="btn-cancelar" onClick={() => setReabastecerProducto(null)}>
+                Cancelar
+              </button>
+              <button 
+                className="btn-confirmar-eliminar" 
+                style={{ backgroundColor: '#10B981', color: 'white' }} 
+                onClick={ejecutarReabastecimiento}
+              >
+                Confirmar
               </button>
             </div>
           </div>
