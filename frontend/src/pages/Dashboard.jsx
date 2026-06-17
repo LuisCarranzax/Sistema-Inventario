@@ -1,108 +1,119 @@
-import React, { useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import api from '../services/api';
 import { AuthContext } from '../context/authContext';
-import { FiTrendingUp, FiDollarSign, FiPackage, FiCheckCircle, FiClock, FiAlertTriangle } from 'react-icons/fi';
+import { FiActivity, FiAlertTriangle, FiDollarSign, FiShoppingBag, FiTool } from 'react-icons/fi';
 import '../css/Dashboard.css';
 
 const Dashboard = () => {
-  // Extraemos el usuario autenticado para el saludo
-  const { user } = useContext(AuthContext);
+  const { user } = useContext(AuthContext); // Extraemos el usuario para el mensaje dinámico
+  const [datos, setDatos] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // DATOS DE PRUEBA (Mocks) para visualizar el esqueleto antes de conectar la BD
-  const resumenMes = {
-    ventas: 145,
-    ingresos: "S/ 4,250.00",
-    topProducto: "Cargador Tipo C - 20W"
+  useEffect(() => {
+    cargarDashboard();
+  }, []);
+
+  const cargarDashboard = async () => {
+    try {
+      const response = await api.get('/dashboard');
+      setDatos(response.data);
+    } catch (error) {
+      console.error("Error al cargar el dashboard:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const inventarioStatus = {
-    alto: 150, // Productos con buen stock
-    medio: 32, // Productos por llegar al límite
-    bajo: 8    // Productos que necesitan abastecimiento urgente
-  };
+  if (loading || !datos) {
+    return <div style={{ padding: '20px' }}>Cargando resumen del día...</div>;
+  }
 
   return (
     <div className="dashboard-container">
       
-      {/* 1. Mensaje de Bienvenida Dinámico */}
-      <header className="welcome-header">
-        {/* Si el usuario no tiene nombre registrado aún, usamos "Juan" como fallback */}
-        <h1>Bienvenido de vuelta, {user?.nombre || 'Juan'}</h1>
-        <p>Aquí tienes el resumen general de COMPUDOCTOR para este mes.</p>
-      </header>
+      {/* SECCIÓN DE BIENVENIDA */}
+      <div className="welcome-section">
+        <h1>¡Bienvenido de vuelta, {user?.nombre || 'Administrador'}!</h1>
+        <p>Este es el resumen operativo de COMPUDOCTOR para el día de hoy.</p>
+      </div>
 
-      {/* 2. Resumen General del Mes */}
-      <section className="summary-grid">
-        <div className="summary-card">
-          <div className="summary-icon">
-            <FiTrendingUp />
-          </div>
-          <div className="summary-info">
-            <h3>Ventas del Mes</h3>
-            <p>{resumenMes.ventas}</p>
+      {/* KPIs DIARIOS */}
+      <div className="daily-kpis">
+        <div className="kpi-diario ingresos">
+          <span className="kpi-diario-titulo"><FiDollarSign /> Ingreso Total Hoy</span>
+          <span className="kpi-diario-valor">S/ {datos.hoy.ingreso_total.toFixed(2)}</span>
+        </div>
+        <div className="kpi-diario ventas">
+          <span className="kpi-diario-titulo"><FiShoppingBag /> Ventas de Productos</span>
+          <span className="kpi-diario-valor">{datos.hoy.ventas_count} trans.</span>
+        </div>
+        <div className="kpi-diario servicios">
+          <span className="kpi-diario-titulo"><FiTool /> Equipos Ingresados</span>
+          <span className="kpi-diario-valor">{datos.hoy.servicios_count} equipos</span>
+        </div>
+      </div>
+
+      {/* CUERPO DEL DASHBOARD (Actividad + Semáforo) */}
+      <div className="dashboard-grid">
+        
+        {/* PANEL IZQUIERDO: Actividad Reciente */}
+        <div className="dashboard-card">
+          <h3><FiActivity color="#3B82F6" /> Actividad Reciente (Hoy)</h3>
+          <div className="actividad-lista">
+            {datos.actividad_reciente.length > 0 ? (
+              datos.actividad_reciente.map((item) => (
+                <div key={item.id} className="actividad-item">
+                  <div>
+                    <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>Ticket #{item.id} - {item.tipo}</div>
+                    <div style={{ fontSize: '0.85rem', color: '#64748B' }}>Cliente: {item.cliente_nombre}</div>
+                  </div>
+                  <div style={{ fontWeight: 'bold', color: '#10B981' }}>
+                    S/ {Number(item.monto).toFixed(2)}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div style={{ textAlign: 'center', color: '#9CA3AF', padding: '20px' }}>
+                Aún no hay ventas registradas el día de hoy.
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="summary-card">
-          <div className="summary-icon">
-            <FiDollarSign />
-          </div>
-          <div className="summary-info">
-            <h3>Ingresos Totales</h3>
-            <p>{resumenMes.ingresos}</p>
+        {/* PANEL DERECHO: Semáforo de Inventario */}
+        <div className="dashboard-card">
+          <h3><FiAlertTriangle color="#F59E0B" /> Alertas de Stock</h3>
+          <div className="semaforo-lista">
+            {datos.alertas_stock.length > 0 ? (
+              datos.alertas_stock.map((prod) => {
+                const esAgotado = prod.stock === 0;
+                const claseSemaforo = esAgotado ? 'semaforo-rojo' : 'semaforo-amarillo';
+                const textoSemaforo = esAgotado ? 'Agotado' : 'Bajo';
+
+                return (
+                  <div key={prod.id} className="semaforo-item">
+                    <div>
+                      <div style={{ fontWeight: '600', fontSize: '0.9rem', color: '#334155' }}>{prod.codigo_interno}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#64748B', display: '-webkit-box', WebkitLineClamp: 1, overflow: 'hidden' }}>
+                        {prod.nombre}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{prod.stock} und.</span>
+                      <span className={`semaforo-badge ${claseSemaforo}`}>{textoSemaforo}</span>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div style={{ textAlign: 'center', color: '#10B981', padding: '20px', fontWeight: '500' }}>
+                ¡Todo en orden! No hay productos con stock crítico.
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="summary-card">
-          <div className="summary-icon">
-            <FiPackage />
-          </div>
-          <div className="summary-info">
-            <h3>Producto más vendido</h3>
-            <p style={{ fontSize: '1.1rem' }}>{resumenMes.topProducto}</p>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. Indicadores Visuales (Semáforo de Inventario) */}
-      <section className="inventory-status-section">
-        <h2>Estado de Inventario (Semáforo)</h2>
-        <div className="traffic-light-grid">
-          
-          <div className="status-item status-high">
-            <div className="status-header">
-              <FiCheckCircle color="var(--status-high)" size={24} />
-              <span>Stock Óptimo</span>
-            </div>
-            <div className="status-count" style={{ color: 'var(--status-high)' }}>
-              {inventarioStatus.alto}
-            </div>
-            <p style={{ fontSize: '0.85rem', color: '#64748B', marginTop: '5px' }}>Productos bien abastecidos</p>
-          </div>
-
-          <div className="status-item status-medium">
-            <div className="status-header">
-              <FiClock color="var(--status-medium)" size={24} />
-              <span>Stock Medio</span>
-            </div>
-            <div className="status-count" style={{ color: 'var(--status-medium)' }}>
-              {inventarioStatus.medio}
-            </div>
-            <p style={{ fontSize: '0.85rem', color: '#64748B', marginTop: '5px' }}>Acercándose al límite mínimo</p>
-          </div>
-
-          <div className="status-item status-low">
-            <div className="status-header">
-              <FiAlertTriangle color="var(--status-low)" size={24} />
-              <span>Stock Crítico</span>
-            </div>
-            <div className="status-count" style={{ color: 'var(--status-low)' }}>
-              {inventarioStatus.bajo}
-            </div>
-            <p style={{ fontSize: '0.85rem', color: '#64748B', marginTop: '5px' }}>Requieren abastecimiento urgente</p>
-          </div>
-
-        </div>
-      </section>
+      </div>
 
     </div>
   );
