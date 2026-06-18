@@ -1,43 +1,95 @@
-import React, { useContext } from 'react';
-import { FiBell, FiUser } from 'react-icons/fi';
+import React, { useState, useContext, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/authContext';
+import { FiUser, FiSettings, FiLogOut, FiChevronDown } from 
+'react-icons/fi';
+import '../../css/TopBar.css';
+
+
 
 const Topbar = () => {
-  const { user } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  // Referencia para cerrar el menú si se hace clic afuera
+  const menuRef = useRef(null);
+
+  // Efecto para cerrar el dropdown si el usuario hace clic en otra parte de la pantalla
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  // Obtenemos la primera letra del nombre para el Avatar
+  const inicial = user?.nombre ? user.nombre.charAt(0).toUpperCase() : 'U';
 
   return (
-    <header style={{
-      display: 'flex',
-      justifyContent: 'flex-end',
-      alignItems: 'center',
-      padding: '15px 30px',
-      backgroundColor: 'white',
-      borderBottom: '1px solid #E2E8F0',
-      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-    }}>
+    <div className="topbar">
       
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-        {/* Icono de notificaciones */}
-        <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#64748B' }}>
-          <FiBell />
+      <div className="user-menu-container" ref={menuRef}>
+        
+        {/* BOTÓN / BURBUJA DEL USUARIO */}
+        <button 
+          className="user-profile-btn" 
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        >
+          <div className="user-avatar">
+            {inicial}
+          </div>
+          <div className="user-info">
+            <span className="user-name">{user?.nombre || 'Usuario'} {user?.apellidos || ''} </span>
+            <span className="user-role">{user?.rol || 'Trabajador'}</span>
+          </div>
+          <FiChevronDown color="#64748B" style={{ marginLeft: '5px' }} />
         </button>
 
-        {/* Perfil de usuario */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '1px solid #E2E8F0', paddingLeft: '20px' }}>
-          <div style={{ 
-            width: '35px', height: '35px', borderRadius: '50%', 
-            backgroundColor: '#2563EB', color: 'white', 
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' 
-          }}>
-            <FiUser />
-          </div>
-          <span style={{ fontSize: '0.9rem', fontWeight: '500', color: '#1E293B' }}>
-            {user?.nombre || 'Administrador' }
-          </span>
-        </div>
-      </div>
+        {/* MENÚ DESPLEGABLE */}
+        {isDropdownOpen && (
+          <div className="dropdown-menu">
+            
+            {/* Opción: Mi Perfil */}
+            <Link 
+              to="/perfil" 
+              className="dropdown-item" 
+              onClick={() => setIsDropdownOpen(false)}
+            >
+              <FiSettings size={18} />
+              Configurar Mi Perfil
+            </Link>
 
-    </header>
+            {/* Opciones extra si es Administrador */}
+            {user?.rol === 'administrador' && (
+              <Link 
+                to="/admin/usuarios" 
+                className="dropdown-item" 
+                onClick={() => setIsDropdownOpen(false)}
+              >
+                <FiUser size={18} />
+                Gestión de Empleados
+              </Link>
+            )}
+
+            {/* Opción: Cerrar Sesión */}
+            <button className="dropdown-item logout" onClick={handleLogout}>
+              <FiLogOut size={18} />
+              Cerrar Sesión
+            </button>
+            
+          </div>
+        )}
+        
+      </div>
+    </div>
   );
 };
 

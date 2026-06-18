@@ -1,0 +1,118 @@
+.topbar {
+  display: flex;
+  justify-content: flex-end; /* Alinea los elementos a la derecha */
+  align-items: center;
+  padding: 15px 30px;
+  background-color: white;
+  border-bottom: 1px solid #E2E8F0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+/* Contenedor relativo para poder anclar el menú flotante */
+.user-menu-container {
+  position: relative;
+}
+
+/* La burbuja / botón del usuario */
+.user-profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 30px;
+  transition: background 0.2s;
+}
+
+.user-profile-btn:hover {
+  background: #F1F5F9;
+}
+
+.user-avatar {
+  background-color: #3B82F6; /* Azul corporativo */
+  color: white;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #1E293B;
+  font-size: 0.9rem;
+}
+
+.user-role {
+  font-size: 0.75rem;
+  color: #64748B;
+  text-transform: capitalize;
+}
+
+/* El menú desplegable flotante */
+.dropdown-menu {
+  position: absolute;
+  top: 110%;
+  right: 0;
+  background: white;
+  min-width: 200px;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #E2E8F0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out forwards;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  color: #475569;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+  background: none;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background-color: #F8FAFC;
+  color: #2563EB;
+}
+
+.dropdown-item.logout {
+  border-top: 1px solid #E2E8F0;
+  color: #EF4444;
+}
+
+.dropdown-item.logout:hover {
+  background-color: #FEF2F2;
+  color: #DC2626;
+}

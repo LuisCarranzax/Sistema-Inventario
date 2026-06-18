@@ -125,9 +125,42 @@ const enviarCorreoRecuperacion = async (correo, codigo) => {
         throw new Error('No se pudo enviar el correo');
     }
 };
+// Alerta de seguridad al correo antiguo
+const enviarAlertaSeguridad = async (emailAntiguo, nombre) => {
+    // Configura tu transporter de nodemailer aquí (el mismo que ya usas)
+    const mailOptions = {
+        from: '"Seguridad COMPUDOCTOR" <tu_correo_mensajero@gmail.com>',
+        to: emailAntiguo,
+        subject: '⚠️ Aviso de Seguridad: Solicitud de cambio de correo',
+        html: `
+            <h2>Hola, ${nombre}</h2>
+            <p>Se ha solicitado cambiar la dirección de correo electrónico asociada a tu cuenta en COMPUDOCTOR.</p>
+            <p>Si fuiste tú, puedes ignorar este mensaje de forma segura.</p>
+            <p style="color: red; font-weight: bold;">Si NO fuiste tú, por favor contacta al administrador del sistema inmediatamente.</p>
+        `
+    };
+    await transporter.sendMail(mailOptions);
+};
 
+// Envío del código OTP al correo nuevo
+const enviarOTPCambioCorreo = async (emailNuevo, nombre, codigo) => {
+    const mailOptions = {
+        from: '"Soporte COMPUDOCTOR" <tu_correo_mensajero@gmail.com>',
+        to: emailNuevo,
+        subject: '🔐 Código de Verificación para nuevo correo',
+        html: `
+            <h2>Hola, ${nombre}</h2>
+            <p>Ingresa el siguiente código de 6 dígitos para confirmar tu nueva dirección de correo:</p>
+            <h1 style="color: #2563EB; font-size: 32px; letter-spacing: 5px;">${codigo}</h1>
+            <p>Este código expirará en 15 minutos.</p>
+        `
+    };
+    await transporter.sendMail(mailOptions);
+};
 module.exports = {
     notificarAdminNuevoRegistro,
     notificarUsuarioResultado,
-    enviarCorreoRecuperacion
+    enviarCorreoRecuperacion,
+    enviarAlertaSeguridad,
+    enviarOTPCambioCorreo,
 }; 

@@ -10,6 +10,7 @@ import PuntoVenta from './pages/PuntoVenta';
 import Inventario from './pages/Inventario';
 import Servicios from './pages/Servicios';
 import Analiticas from './pages/Analiticas';
+import PerfilTrabajador from './pages/PerfilTrabajador';
 
 // IMPORTACIÓN DEL LAYOUT (La pieza que faltaba)
 import Layout from './components/layout/Layout';
@@ -42,6 +43,7 @@ function App() {
             <Route path="inventario" element={<Inventario />} />
             <Route path="servicios" element={<Servicios />} />
             <Route path="analiticas" element={<Analiticas />} />
+            <Route path="perfil" element={<PerfilTrabajador />} />
           </Route>
 
           {/* Ruta por defecto (opcional): Si el usuario escribe una URL que no existe */}

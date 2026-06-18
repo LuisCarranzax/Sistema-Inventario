@@ -109,3 +109,6 @@ CREATE TABLE movimientos_inventario (
     usuario_id INT DEFAULT 1, -- Para saber qué trabajador registró el ingreso
     FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
 );
+
+ALTER TABLE usuarios 
+ADD COLUMN nuevo_correo_temp VARCHAR(150) NULL AFTER correo;

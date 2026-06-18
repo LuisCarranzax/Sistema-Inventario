@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertCircle, FiCheckCircle, FiKey } from 'react-icons/fi';
 import '../../css/auth/Register.css';
 import api from '../../services/api';
 
 const UpdatePassword = () => {
+  const location = useLocation();
   const [step, setStep] = useState(1); // 1: Correo, 2: Código OTP, 3: Nueva Contraseña
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(location.state?.email || '');
   const [otpCode, setOtpCode] = useState('');
   const [passwords, setPasswords] = useState({ newPassword: '', confirmNewPassword: '' });
   const [showPassword, setShowPassword] = useState(false);
