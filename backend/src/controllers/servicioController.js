@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const auditoriaService = require('../services/auditoriaService');
 
 // Crear servicio (Ya lo tienes configurado desde tu formulario, pero lo pongo para tener todo centralizado)
 exports.registrarServicio = async (req, res) => {
@@ -13,8 +14,7 @@ exports.registrarServicio = async (req, res) => {
         metodo_pago,
         estado
     } = req.body;
-    // Asumimos un usuario_id fijo por ahora (1) hasta que conectes el login en el frontend
-    const finalUsuarioId = usuario_id || 1; 
+    const finalUsuarioId = req.headers['x-usuario-id'] || usuario_id || 1; 
 
     try {
         const query = `
@@ -33,6 +33,7 @@ exports.registrarServicio = async (req, res) => {
             metodo_pago || 'Por definir',
             estado || 'en_revision'
         ]);
+        await auditoriaService.registrarEvento(finalUsuarioId, 'REGISTRO', 'Servicios', `Servicio registrado para cliente: ${cliente_nombre} - Equipo: ${equipo_dispositivo}`);
         res.status(201).json({ message: "Servicio registrado exitosamente." });
     } catch (error) {
         res.status(500).json({ message: "Error al registrar servicio", error: error.message });
@@ -95,8 +96,15 @@ exports.actualizarPago = async (req, res) => {
 exports.eliminarServicio = async (req, res) => {
     const { id } = req.params;
     try {
-        await db.query('DELETE FROM servicios_tecnicos WHERE id = ?', [id]);
-        res.json({ message: "Servicio eliminado correctamente" });
+        const usuarioId = req.headers['x-usuario-id'] || 1;
+        const [[servicio]] = await db.query('SELECT cliente_nombre, equipo_dispositivo FROM servicios_tecnicos WHERE id = ?', [id]);
+        if (servicio) {
+            await db.query('DELETE FROM servicios_tecnicos WHERE id = ?', [id]);
+            await auditoriaService.registrarEvento(usuarioId, 'ELIMINACION', 'Servicios', `Servicio eliminado: Cliente ${servicio.cliente_nombre} - Equipo ${servicio.equipo_dispositivo}`);
+            res.json({ message: "Servicio eliminado correctamente" });
+        } else {
+            res.status(404).json({ message: "Servicio no encontrado" });
+        }
     } catch (error) {
         res.status(500).json({ message: "Error al eliminar servicio", error: error.message });
     }

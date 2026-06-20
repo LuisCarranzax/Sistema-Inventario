@@ -12,6 +12,8 @@ const ventaRoutes = require('./routes/ventaRoutes');
 const analiticaRoutes = require('./routes/analiticaRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const usuarioRoutes = require('./routes/usuarioRoutes');
+const categoriaRoutes = require('./routes/categoriaRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // Middlewares
 app.use(cors()); // Permite peticiones cruzadas desde el frontend
@@ -37,6 +39,8 @@ app.use('/api/ventas', ventaRoutes);
 app.use('/api/analiticas', analiticaRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/categorias', categoriaRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Ruta de comprobación de salud del servidor (Health check)
 app.get('/', (req, res) => {

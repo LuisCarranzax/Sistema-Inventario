@@ -2,6 +2,12 @@ const db = require('../config/db');
 
 exports.obtenerDatosDashboard = async (req, res) => {
     try {
+        const usuarioId = req.headers['x-usuario-id'] || 1;
+
+        // 0. Obtener rol de este usuario para filtrar la actividad
+        const [[userRow]] = await db.query('SELECT rol FROM usuarios WHERE id = ?', [usuarioId]);
+        const userRole = userRow ? userRow.rol : 'trabajador';
+
         // 1. Ingresos y Ventas de HOY
         const queryVentasHoy = `
             SELECT 
@@ -20,15 +26,7 @@ exports.obtenerDatosDashboard = async (req, res) => {
             WHERE DATE(fecha_ingreso) = CURDATE()
         `;
 
-        // 3. Actividad Reciente (Últimas 5 operaciones mezcladas simuladas, aquí traemos ventas recientes)
-        const queryActividadReciente = `
-            SELECT id, cliente_nombre, total as monto, fecha_venta as fecha, 'Venta' as tipo 
-            FROM ventas 
-            WHERE DATE(fecha_venta) = CURDATE() AND es_proforma = FALSE
-            ORDER BY fecha_venta DESC LIMIT 5
-        `;
-
-        // 4. Semáforo de Stock (Solo productos en alerta: Rojo o Amarillo)
+        // 3. Semáforo de Stock (Solo productos en alerta: Rojo o Amarillo)
         const queryAlertasStock = `
             SELECT id, codigo_interno, nombre, stock, stock_minimo 
             FROM productos 
@@ -37,10 +35,34 @@ exports.obtenerDatosDashboard = async (req, res) => {
             LIMIT 8
         `;
 
+        // 4. Actividad Reciente desde Auditoría
+        let queryActividadReciente = '';
+        let paramsActividad = [];
+
+        if (userRole === 'administrador') {
+            // El administrador ve toda la actividad
+            queryActividadReciente = `
+                SELECT a.*, u.nombre, u.apellidos 
+                FROM auditoria a
+                JOIN usuarios u ON a.usuario_id = u.id
+                ORDER BY a.fecha DESC LIMIT 10
+            `;
+        } else {
+            // El trabajador sólo ve su propia actividad
+            queryActividadReciente = `
+                SELECT a.*, u.nombre, u.apellidos 
+                FROM auditoria a
+                JOIN usuarios u ON a.usuario_id = u.id
+                WHERE a.usuario_id = ?
+                ORDER BY a.fecha DESC LIMIT 10
+            `;
+            paramsActividad = [usuarioId];
+        }
+
         const [[resVentas]] = await db.query(queryVentasHoy);
         const [[resServicios]] = await db.query(queryServiciosHoy);
-        const [actividad] = await db.query(queryActividadReciente);
         const [alertasStock] = await db.query(queryAlertasStock);
+        const [actividad] = await db.query(queryActividadReciente, paramsActividad);
 
         res.json({
             hoy: {

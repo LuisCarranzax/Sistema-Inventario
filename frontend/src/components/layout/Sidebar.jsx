@@ -8,7 +8,7 @@ import { FiMenu,
   FiLogOut, 
   FiTool } 
 from 'react-icons/fi';
-import { AuthContext } from '../../context/authContext';
+import { AuthContext } from '../../context/AuthContext';
 import './Layout.css';
 
 const Sidebar = () => {

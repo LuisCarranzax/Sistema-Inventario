@@ -27,19 +27,36 @@ const configuracionCategorias = {
   ]
 };
 
-// 1. AÑADIMOS LOS PROPS AQUI:
 const FormularioProducto = ({ productoAEditar, cerrarFormulario }) => {
   const { showToast } = useToast();
+  const [categorias, setCategorias] = useState([]);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
+  const [creandoCategoria, setCreandoCategoria] = useState(false);
+  const [nuevaCat, setNuevaCat] = useState({ nombre: '', prefijo_codigo: '' });
+
   const [datosGenerales, setDatosGenerales] = useState({
     nombre: '', precio_compra: '', precio_venta: '', stock: '', stock_minimo: ''
   });
   const [detallesTecnicos, setDetallesTecnicos] = useState({});
 
-  // 2. EL EFECTO DE MEMORIA (Modo Edición)
+  const categoriaObj = categorias.find(cat => cat.nombre === categoriaSeleccionada);
+  const camposDinamicos = categoriaObj?.plantilla_campos || [];
+
+  useEffect(() => {
+    cargarCategorias();
+  }, []);
+
+  const cargarCategorias = async () => {
+    try {
+      const response = await api.get('/categorias');
+      setCategorias(response.data);
+    } catch (error) {
+      console.error("Error al obtener categorías:", error);
+    }
+  };
+
   useEffect(() => {
     if (productoAEditar) {
-      // Si llega un producto, llenamos el formulario
       setCategoriaSeleccionada(productoAEditar.categoria_nombre);
       setDatosGenerales({
         nombre: productoAEditar.nombre,
@@ -49,7 +66,6 @@ const FormularioProducto = ({ productoAEditar, cerrarFormulario }) => {
         stock_minimo: productoAEditar.stock_minimo
       });
       
-      // Convertimos el JSON de MySQL a un objeto de React
       let detalles = productoAEditar.detalles_tecnicos;
       if (typeof detalles === 'string') {
         try { detalles = JSON.parse(detalles); } catch (e) { detalles = {}; }
@@ -75,6 +91,31 @@ const FormularioProducto = ({ productoAEditar, cerrarFormulario }) => {
     }
   };
 
+  const handleCrearCategoria = async () => {
+    if (!nuevaCat.nombre || !nuevaCat.prefijo_codigo) {
+      return showToast('Por favor completa el nombre y prefijo para la nueva categoría.', 'error');
+    }
+    try {
+      await api.post('/categorias', { 
+        nombre: nuevaCat.nombre, 
+        prefijo_codigo: nuevaCat.prefijo_codigo.toUpperCase(),
+        plantilla_campos: []
+      });
+      showToast('Categoría creada con éxito.', 'success');
+      
+      const response = await api.get('/categorias');
+      setCategorias(response.data);
+      setCategoriaSeleccionada(nuevaCat.nombre);
+      setDetallesTecnicos({});
+      
+      setNuevaCat({ nombre: '', prefijo_codigo: '' });
+      setCreandoCategoria(false);
+    } catch (error) {
+      console.error(error);
+      showToast(error.response?.data?.message || 'Error al crear la categoría.', 'error');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -85,7 +126,6 @@ const FormularioProducto = ({ productoAEditar, cerrarFormulario }) => {
     };
 
     try {
-      // 3. DECIDIMOS SI ACTUALIZAR (PUT) O REGISTRAR (POST)
       if (productoAEditar) {
         await api.put(`/productos/${productoAEditar.id}`, productoFinal);
         showToast('Producto actualizado correctamente.', 'success');
@@ -94,11 +134,9 @@ const FormularioProducto = ({ productoAEditar, cerrarFormulario }) => {
         showToast(`${response.data.message} Código interno: ${response.data.codigo}`, 'success');
       }
 
-      // Si nos pasaron la función para cerrar (volver a la tabla), la ejecutamos
       if (cerrarFormulario) {
         cerrarFormulario();
       } else {
-        // Si estamos creando varios seguidos, solo limpiamos
         setDatosGenerales({ nombre: '', precio_compra: '', precio_venta: '', stock: '', stock_minimo: '' });
         setCategoriaSeleccionada('');
         setDetallesTecnicos({});
@@ -117,21 +155,64 @@ const FormularioProducto = ({ productoAEditar, cerrarFormulario }) => {
       <form onSubmit={handleSubmit}>
         
         <div className="input-group">
-          <label>Categoría del Producto</label>
-          <select 
-            value={categoriaSeleccionada} 
-            onChange={(e) => {
-              setCategoriaSeleccionada(e.target.value);
-              setDetallesTecnicos({}); 
-            }}
-            required
-            disabled={!!productoAEditar} /* Bloqueamos cambiar la categoría si estamos editando */
-          >
-            <option value="">-- Selecciona una categoría --</option>
-            {Object.keys(configuracionCategorias).map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <label style={{ margin: 0 }}>Categoría del Producto</label>
+            {!productoAEditar && (
+              <button 
+                type="button" 
+                className="btn-link-categoria" 
+                onClick={() => setCreandoCategoria(!creandoCategoria)}
+                style={{ background: 'none', border: 'none', color: '#3B82F6', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                {creandoCategoria ? 'Cancelar' : '+ Nueva Categoría'}
+              </button>
+            )}
+          </div>
+          
+          {!creandoCategoria ? (
+            <select 
+              value={categoriaSeleccionada} 
+              onChange={(e) => {
+                setCategoriaSeleccionada(e.target.value);
+                setDetallesTecnicos({}); 
+              }}
+              required
+              disabled={!!productoAEditar}
+            >
+              <option value="">-- Selecciona una categoría --</option>
+              {categorias.map(cat => (
+                <option key={cat.id} value={cat.nombre}>{cat.nombre}</option>
+              ))}
+            </select>
+          ) : (
+            <div style={{ border: '1px dashed #CBD5E1', padding: '12px', borderRadius: '6px', background: '#F8FAFC', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <input 
+                  type="text" 
+                  placeholder="Nombre. Ej: Tarjetas Gráficas" 
+                  value={nuevaCat.nombre} 
+                  onChange={(e) => setNuevaCat({ ...nuevaCat, nombre: e.target.value })} 
+                  style={{ flex: 2, padding: '8px', fontSize: '0.9rem', border: '1px solid #CBD5E1', borderRadius: '4px' }}
+                />
+                <input 
+                  type="text" 
+                  placeholder="Prefijo (max 5). Ej: GPU" 
+                  value={nuevaCat.prefijo_codigo} 
+                  maxLength={5}
+                  onChange={(e) => setNuevaCat({ ...nuevaCat, prefijo_codigo: e.target.value })} 
+                  style={{ flex: 1, padding: '8px', fontSize: '0.9rem', textTransform: 'uppercase', border: '1px solid #CBD5E1', borderRadius: '4px' }}
+                />
+              </div>
+              <button 
+                type="button" 
+                className="btn-seguridad" 
+                onClick={handleCrearCategoria}
+                style={{ padding: '8px 12px', fontSize: '0.85rem', width: '100%' }}
+              >
+                Crear e ir al formulario
+              </button>
+            </div>
+          )}
         </div>
 
         {categoriaSeleccionada && (
@@ -162,12 +243,12 @@ const FormularioProducto = ({ productoAEditar, cerrarFormulario }) => {
               </div>
             </div>
 
-            {configuracionCategorias[categoriaSeleccionada] && configuracionCategorias[categoriaSeleccionada].length > 0 && (
+            {camposDinamicos && camposDinamicos.length > 0 && (
               <>
                 <h3 className="form-section-title">Características Específicas</h3>
                 <div className="grid-2-cols">
                   
-                  {configuracionCategorias[categoriaSeleccionada].map((campo, index) => (
+                  {camposDinamicos.map((campo, index) => (
                     <div className="input-group" key={index}>
                       <label>{campo.label}</label>
                       

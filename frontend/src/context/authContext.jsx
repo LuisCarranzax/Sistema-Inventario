@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user_session');
-    window.location.href = '/login'; // Redirección limpia al salir
+    window.location.replace('/login'); // Reemplazo de historial limpio al salir
   };
 
   return (

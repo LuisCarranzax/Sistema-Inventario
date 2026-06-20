@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { FiDownload, FiTrendingUp, FiDollarSign, FiShoppingBag, FiTool } from 'react-icons/fi';
 import '../css/Analiticas.css';
 import { useToast } from '../context/ToastContext';
-import { AuthContext } from '../context/authContext';
+import { AuthContext } from '../context/AuthContext';
 
 
 const Analiticas = () => {

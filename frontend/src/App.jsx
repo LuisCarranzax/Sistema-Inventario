@@ -11,10 +11,11 @@ import Inventario from './pages/Inventario';
 import Servicios from './pages/Servicios';
 import Analiticas from './pages/Analiticas';
 import PerfilTrabajador from './pages/PerfilTrabajador';
+import PanelAdmin from './pages/AdminPanel';
 
 // IMPORTACIÓN DEL LAYOUT (La pieza que faltaba)
 import Layout from './components/layout/Layout';
-import { AuthProvider } from './context/authContext';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
@@ -26,7 +27,7 @@ function App() {
               RUTAS PÚBLICAS (Sin barra lateral)
               ========================================= */}
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/register" element={<Navigate to="/login" replace />} />
           <Route path="/update-password" element={<UpdatePassword />} />
 
           {/* =========================================
@@ -43,6 +44,7 @@ function App() {
             <Route path="inventario" element={<Inventario />} />
             <Route path="servicios" element={<Servicios />} />
             <Route path="analiticas" element={<Analiticas />} />
+            <Route path="admin" element={<PanelAdmin />} />
             <Route path="perfil" element={<PerfilTrabajador />} />
           </Route>
 

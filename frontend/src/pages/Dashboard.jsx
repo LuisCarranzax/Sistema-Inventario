@@ -1,8 +1,40 @@
 import React, { useState, useEffect, useContext } from 'react';
 import api from '../services/api';
-import { AuthContext } from '../context/authContext';
-import { FiActivity, FiAlertTriangle, FiDollarSign, FiShoppingBag, FiTool } from 'react-icons/fi';
+import { AuthContext } from '../context/AuthContext';
+import { FiActivity, FiAlertTriangle, FiDollarSign, FiShoppingBag, FiTool, FiPackage, FiFolder, FiUser, FiClock } from 'react-icons/fi';
 import '../css/Dashboard.css';
+
+const getModuloInfo = (modulo) => {
+  switch (modulo) {
+    case 'Inventario':
+      return { icon: <FiPackage size={16} />, color: '#10B981', bg: '#ECFDF5' };
+    case 'Ventas':
+      return { icon: <FiShoppingBag size={16} />, color: '#3B82F6', bg: '#EFF6FF' };
+    case 'Servicios':
+      return { icon: <FiTool size={16} />, color: '#8B5CF6', bg: '#F5F3FF' };
+    case 'Categorías':
+      return { icon: <FiFolder size={16} />, color: '#F59E0B', bg: '#FFFBEB' };
+    case 'Usuarios':
+      return { icon: <FiUser size={16} />, color: '#EF4444', bg: '#FEF2F2' };
+    default:
+      return { icon: <FiActivity size={16} />, color: '#64748B', bg: '#F8FAFC' };
+  }
+};
+
+const formatFecha = (fechaStr) => {
+  try {
+    const fecha = new Date(fechaStr);
+    return fecha.toLocaleDateString('es-PE', {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  } catch (e) {
+    return fechaStr;
+  }
+};
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext); // Extraemos el usuario para el mensaje dinámico
@@ -58,23 +90,47 @@ const Dashboard = () => {
         
         {/* PANEL IZQUIERDO: Actividad Reciente */}
         <div className="dashboard-card">
-          <h3><FiActivity color="#3B82F6" /> Actividad Reciente (Hoy)</h3>
+          <h3><FiActivity color="#3B82F6" /> Actividad Reciente</h3>
           <div className="actividad-lista">
             {datos.actividad_reciente.length > 0 ? (
-              datos.actividad_reciente.map((item) => (
-                <div key={item.id} className="actividad-item">
-                  <div>
-                    <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>Ticket #{item.id} - {item.tipo}</div>
-                    <div style={{ fontSize: '0.85rem', color: '#64748B' }}>Cliente: {item.cliente_nombre}</div>
+              datos.actividad_reciente.map((item) => {
+                const info = getModuloInfo(item.modulo);
+                return (
+                  <div 
+                    key={item.id} 
+                    className="actividad-item-modern"
+                    style={{ borderLeftColor: info.color }}
+                  >
+                    <div className="actividad-item-icon" style={{ backgroundColor: info.bg }}>
+                      {info.icon}
+                    </div>
+                    <div className="actividad-item-details">
+                      <div className="actividad-meta">
+                        <span className="actividad-usuario">
+                          <FiUser style={{ marginRight: '4px' }} />
+                          {item.nombre} {item.apellidos}
+                        </span>
+                        <span className="actividad-fecha">
+                          <FiClock style={{ marginRight: '4px' }} />
+                          {formatFecha(item.fecha)}
+                        </span>
+                      </div>
+                      <div className="actividad-texto">{item.detalles}</div>
+                      <div className="actividad-tags">
+                        <span className="tag-modulo" style={{ color: info.color, backgroundColor: info.bg }}>
+                          {item.modulo}
+                        </span>
+                        <span className={`tag-accion ${item.accion.toLowerCase()}`}>
+                          {item.accion}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontWeight: 'bold', color: '#10B981' }}>
-                    S/ {Number(item.monto).toFixed(2)}
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div style={{ textAlign: 'center', color: '#9CA3AF', padding: '20px' }}>
-                Aún no hay ventas registradas el día de hoy.
+                Aún no hay actividades registradas en el sistema.
               </div>
             )}
           </div>

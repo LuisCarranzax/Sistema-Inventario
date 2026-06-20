@@ -1,8 +1,7 @@
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../../context/authContext';
-import { FiUser, FiSettings, FiLogOut, FiChevronDown } from 
-'react-icons/fi';
+import { AuthContext } from '../../context/AuthContext';
+import { FiUser, FiSettings, FiLogOut, FiChevronDown, FiShield } from 'react-icons/fi';
 import '../../css/TopBar.css';
 
 
@@ -70,12 +69,12 @@ const Topbar = () => {
             {/* Opciones extra si es Administrador */}
             {user?.rol === 'administrador' && (
               <Link 
-                to="/admin/usuarios" 
+                to="/admin" 
                 className="dropdown-item" 
                 onClick={() => setIsDropdownOpen(false)}
               >
-                <FiUser size={18} />
-                Gestión de Empleados
+                <FiShield size={18} />
+                Panel de Admin
               </Link>
             )}
 

@@ -1,10 +1,11 @@
 const db = require('../config/db');
+const auditoriaService = require('../services/auditoriaService');
 
 exports.registrarVenta = async (req, res) => {
     const { carrito, total, metodo_pago, es_proforma, cliente_nombre } = req.body;
     
     // Por ahora usamos un ID estático hasta conectar el AuthContext completo
-    const usuario_id = 1; 
+    const usuario_id = req.headers['x-usuario-id'] || 1; 
 
     // Iniciamos una conexión para la Transacción
     const connection = await db.getConnection();
@@ -49,6 +50,16 @@ exports.registrarVenta = async (req, res) => {
         }
 
         await connection.commit(); // <-- Si todo salió bien, guardamos definitivamente
+
+        const detallesVenta = es_proforma
+            ? `Proforma generada para ${cliente_nombre || 'Cliente General'}. Total: S/ ${total}`
+            : `Venta registrada para ${cliente_nombre || 'Cliente General'}. Total: S/ ${total} (${metodo_pago})`;
+        await auditoriaService.registrarEvento(
+            usuario_id, 
+            es_proforma ? 'PROFORMA' : 'VENTA', 
+            'Ventas', 
+            detallesVenta
+        );
 
         res.status(201).json({ 
             message: es_proforma ? "Proforma generada correctamente" : "Venta registrada con éxito",

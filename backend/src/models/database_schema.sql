@@ -112,3 +112,18 @@ CREATE TABLE movimientos_inventario (
 
 ALTER TABLE usuarios 
 ADD COLUMN nuevo_correo_temp VARCHAR(150) NULL AFTER correo;
+
+-- 1. Asegurar que el estado del usuario tenga la opción 'inactivo'
+ALTER TABLE usuarios 
+MODIFY COLUMN estado ENUM('pendiente', 'aprobado', 'rechazado', 'inactivo') DEFAULT 'pendiente';
+
+-- 2. Crear la tabla de Auditoría (Registro de Eventos)
+CREATE TABLE auditoria (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    accion VARCHAR(255) NOT NULL,
+    modulo VARCHAR(50) NOT NULL, -- Ej: 'Ventas', 'Inventario', 'Usuarios'
+    detalles TEXT,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);

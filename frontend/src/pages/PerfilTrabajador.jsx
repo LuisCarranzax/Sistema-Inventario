@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { AuthContext } from '../context/authContext';
+import { AuthContext } from '../context/AuthContext';
 import { FiUser, FiLock, FiMail } from 'react-icons/fi';
 import '../css/PerfilTrabajador.css';
 
-const PerfilTrabajador = () => {
+const PerfilTrabajador = ({ hideHeader = false }) => {
   const { user, login, logout } = useContext(AuthContext); 
   const navigate = useNavigate();
   
@@ -92,8 +92,12 @@ const PerfilTrabajador = () => {
 
   return (
     <div className="perfil-container">
-      <h1>Panel de Usuario</h1>
-      <p style={{ color: '#64748B' }}>Gestiona tu cuenta y edita tus datos personales.</p>
+      {!hideHeader && (
+        <>
+          <h1>Panel de Usuario</h1>
+          <p style={{ color: '#64748B' }}>Gestiona tu cuenta y edita tus datos personales.</p>
+        </>
+      )}
 
       <div className="perfil-grid">
         

@@ -18,13 +18,24 @@ const Inventario = () => {
   const [reabastecerProducto, setReabastecerProducto] = useState(null);
   const [cantidadReabastecer, setCantidadReabastecer] = useState('');
 
-  const categoriasFiltro = ['Todos', 'Cargadores', 'Mouse', 'Mousepad', 'Cables PC'];
+  const [categoriasFiltro, setCategoriasFiltro] = useState(['Todos']);
 
   useEffect(() => {
     if (!mostrarFormulario) {
       cargarProductos();
+      cargarCategorias();
     }
   }, [mostrarFormulario]);
+
+  const cargarCategorias = async () => {
+    try {
+      const response = await api.get('/categorias');
+      const nombres = response.data.map(c => c.nombre);
+      setCategoriasFiltro(['Todos', ...nombres]);
+    } catch (error) {
+      console.error("Error al cargar categorías:", error);
+    }
+  };
 
   const cargarProductos = async () => {
     try {
@@ -171,7 +182,7 @@ const Inventario = () => {
                             className="btn-accion" 
                             style={{ color: '#10B981', backgroundColor: '#ECFDF5' }} 
                             title="Reabastecer" 
-                            onClick={() => setReabastecerProducto({ id: prod.id, nombre: prod.nombre, stock: prod.stock })}
+                            onClick={() => setReabastecerProducto({ id: prod.id, nombre: prod.nombre, stock: prod.stock, fecha_abastecimiento: prod.fecha_abastecimiento })}
                           >
                             <FiPlusCircle size={16} />
                           </button>

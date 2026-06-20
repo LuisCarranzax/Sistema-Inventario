@@ -1,15 +1,21 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { FiMail, FiLock, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api'; // Nuestra conexión a Axios
-import { AuthContext } from '../../context/authContext';
+import { AuthContext } from '../../context/AuthContext';
 import '../../css/auth/Login.css'; 
 
 const Login = () => {
   const [credentials, setCredentials] = useState({ correo: '', password: '' });
   const [alert, setAlert] = useState(null); 
-  const { login } = useContext(AuthContext); // Extraemos la función del contexto
+  const { user, login, loading } = useContext(AuthContext); // Extraemos la función y sesión
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/', { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   const handleChange = (e) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
@@ -70,10 +76,6 @@ const Login = () => {
                 ¿Olvidaste tu contraseña? <Link to='/update-password'>Actualizar contraseña</Link>
               </div>
               <button type="submit" className="btn-modern-auth">Entrar al Sistema</button>
-              
-              <div className="auth-redirect">
-                ¿No tienes cuenta? <Link to='/register'>Regístrate aquí</Link> 
-              </div>
             </form>
           </div>
         </div>
