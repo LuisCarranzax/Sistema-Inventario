@@ -17,7 +17,8 @@ import {
   FiEye,
   FiEyeOff,
   FiAlertCircle,
-  FiCheckCircle
+  FiCheckCircle,
+  FiEdit
 } from 'react-icons/fi';
 import { evaluatePasswordStrength } from '../utils/passwordValidator';
 import PerfilTrabajador from './PerfilTrabajador'; // Reutilizamos el componente que ya creaste
@@ -32,7 +33,7 @@ const PanelAdmin = () => {
   const [categorias, setCategorias] = useState([]);
   const [mostrarModalCategoria, setMostrarModalCategoria] = useState(false);
   const [nuevaCat, setNuevaCat] = useState({ nombre: '', prefijo_codigo: '', campos: [] });
-  const [nombreCat, setNombreCat] = useState('');
+  const [editandoCatId, setEditandoCatId] = useState(null);
   
   // Estados para el Registro de Trabajadores
   const [mostrarModalRegistro, setMostrarModalRegistro] = useState(false);
@@ -98,17 +99,55 @@ const PanelAdmin = () => {
     });
 
     try {
-      await api.post('/categorias', {
-        nombre: nuevaCat.nombre,
-        prefijo_codigo: nuevaCat.prefijo_codigo.toUpperCase(),
-        plantilla_campos: plantilla_campos
-      });
-      alert("✅ Categoría creada exitosamente.");
+      if (editandoCatId) {
+        await api.put(`/categorias/${editandoCatId}`, {
+          nombre: nuevaCat.nombre,
+          prefijo_codigo: nuevaCat.prefijo_codigo.toUpperCase(),
+          plantilla_campos: plantilla_campos
+        });
+        alert("✅ Categoría actualizada exitosamente.");
+      } else {
+        await api.post('/categorias', {
+          nombre: nuevaCat.nombre,
+          prefijo_codigo: nuevaCat.prefijo_codigo.toUpperCase(),
+          plantilla_campos: plantilla_campos
+        });
+        alert("✅ Categoría creada exitosamente.");
+      }
       setMostrarModalCategoria(false);
       setNuevaCat({ nombre: '', prefijo_codigo: '', campos: [] });
+      setEditandoCatId(null);
       cargarCategorias();
     } catch (error) {
-      alert(`❌ Error al crear categoría: ${error.response?.data?.message || error.message}`);
+      alert(`❌ Error al procesar categoría: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
+  const habilitarEdicionCategoria = (cat) => {
+    const camposMapeados = (cat.plantilla_campos || []).map(c => ({
+      label: c.label,
+      tipo: c.tipo,
+      opcionesRaw: c.opciones ? c.opciones.join(', ') : ''
+    }));
+
+    setNuevaCat({
+      nombre: cat.nombre,
+      prefijo_codigo: cat.prefijo_codigo,
+      campos: camposMapeados
+    });
+    setEditandoCatId(cat.id);
+    setMostrarModalCategoria(true);
+  };
+
+  const ejecutarEliminarCategoria = async (id, nombre) => {
+    if (window.confirm(`⚠️ ¿Estás seguro de que deseas eliminar la categoría "${nombre}"? Esta acción no se puede deshacer y comprobará que no tenga productos asociados.`)) {
+      try {
+        await api.delete(`/categorias/${id}`);
+        alert("✅ Categoría eliminada con éxito.");
+        cargarCategorias();
+      } catch (error) {
+        alert(`❌ Error al eliminar la categoría: ${error.response?.data?.message || error.message}`);
+      }
     }
   };
 
@@ -197,11 +236,13 @@ const PanelAdmin = () => {
     }
   };
 
-  const toggleEstadoUsuario = async (id, estadoActual) => {
-    const nuevoEstado = estadoActual === 'aprobado' ? 'inactivo' : 'aprobado';
-    const accion = nuevoEstado === 'inactivo' ? 'SUSPENDER' : 'REACTIVAR';
-    
-    if (window.confirm(`¿Estás seguro de que deseas ${accion} a este empleado?`)) {
+  const cambiarEstadoUsuarioDirecto = async (id, nuevoEstado, nombreCompleto) => {
+    let accionVerbo = '';
+    if (nuevoEstado === 'aprobado') accionVerbo = 'aprobar el acceso a';
+    if (nuevoEstado === 'rechazado') accionVerbo = 'rechazar la solicitud de';
+    if (nuevoEstado === 'inactivo') accionVerbo = 'suspender el acceso a';
+
+    if (window.confirm(`¿Estás seguro de que deseas ${accionVerbo} ${nombreCompleto}?`)) {
       try {
         await api.put(`/admin/usuarios/${id}/estado`, { estado: nuevoEstado });
         cargarEmpleados();
@@ -209,6 +250,107 @@ const PanelAdmin = () => {
         alert("Error al actualizar el estado del usuario.");
       }
     }
+  };
+
+  const getBadgeStyle = (estado) => {
+    switch (estado) {
+      case 'aprobado':
+        return { bg: '#DCFCE7', text: '#166534', label: 'APROBADO' };
+      case 'pendiente':
+        return { bg: '#FEF3C7', text: '#92400E', label: 'PENDIENTE' };
+      case 'rechazado':
+        return { bg: '#FEE2E2', text: '#991B1B', label: 'RECHAZADO' };
+      case 'inactivo':
+        return { bg: '#E2E8F0', text: '#475569', label: 'SUSPENDIDO' };
+      default:
+        return { bg: '#F1F5F9', text: '#334155', label: estado.toUpperCase() };
+    }
+  };
+
+  const renderAcciones = (emp) => {
+    const nombreCompleto = `${emp.nombre} ${emp.apellidos}`;
+    
+    if (emp.estado === 'pendiente') {
+      return (
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => cambiarEstadoUsuarioDirecto(emp.id, 'aprobado', nombreCompleto)}
+            style={{ 
+              background: '#DCFCE7', 
+              color: '#15803D', 
+              border: '1px solid #BBF7D0', 
+              padding: '6px 12px', 
+              borderRadius: '6px', 
+              cursor: 'pointer', 
+              fontWeight: 'bold',
+              fontSize: '0.85rem' 
+            }}
+          >
+            Aprobar
+          </button>
+          <button
+            onClick={() => cambiarEstadoUsuarioDirecto(emp.id, 'rechazado', nombreCompleto)}
+            style={{ 
+              background: '#FEE2E2', 
+              color: '#B91C1C', 
+              border: '1px solid #FECACA', 
+              padding: '6px 12px', 
+              borderRadius: '6px', 
+              cursor: 'pointer', 
+              fontWeight: 'bold',
+              fontSize: '0.85rem' 
+            }}
+          >
+            Rechazar
+          </button>
+        </div>
+      );
+    }
+
+    if (emp.estado === 'aprobado') {
+      return (
+        <button 
+          onClick={() => cambiarEstadoUsuarioDirecto(emp.id, 'inactivo', nombreCompleto)}
+          style={{ 
+            background: '#FEF2F2', 
+            color: '#EF4444', 
+            border: '1px solid #FEE2E2', 
+            padding: '6px 12px', 
+            borderRadius: '6px', 
+            cursor: 'pointer', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '5px', 
+            fontWeight: 'bold',
+            fontSize: '0.85rem' 
+          }}
+        >
+          <FiPower /> Suspender Acceso
+        </button>
+      );
+    }
+
+    // Si está inactivo o rechazado
+    return (
+      <button 
+        onClick={() => cambiarEstadoUsuarioDirecto(emp.id, 'aprobado', nombreCompleto)}
+        style={{ 
+          background: '#EFF6FF', 
+          color: '#3B82F6', 
+          border: '1px solid #DBEAFE', 
+          padding: '6px 12px', 
+          borderRadius: '6px', 
+          cursor: 'pointer', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '5px', 
+          fontWeight: 'bold',
+          fontSize: '0.85rem' 
+        }}
+      >
+        <FiPower /> Reactivar Acceso
+      </button>
+    );
   };
 
   return (
@@ -258,26 +400,34 @@ const PanelAdmin = () => {
                 </tr>
               </thead>
               <tbody>
-                {empleados.map(emp => (
-                  <tr key={emp.id} style={{ opacity: emp.estado === 'inactivo' ? 0.6 : 1 }}>
-                    <td style={{ fontWeight: 'bold' }}>{emp.nombre} {emp.apellidos}</td>
-                    <td>{emp.correo}</td>
-                    <td>{emp.celular}</td>
-                    <td>
-                      <span className={`estado-badge ${emp.estado === 'aprobado' ? 'estado-reparado' : 'estado-rojo'}`} style={{ backgroundColor: emp.estado === 'aprobado' ? '#DCFCE7' : '#FEE2E2', color: emp.estado === 'aprobado' ? '#166534' : '#991B1B' }}>
-                        {emp.estado.toUpperCase()}
-                      </span>
-                    </td>
-                    <td>
-                      <button 
-                        onClick={() => toggleEstadoUsuario(emp.id, emp.estado)}
-                        style={{ background: emp.estado === 'aprobado' ? '#FEF2F2' : '#EFF6FF', color: emp.estado === 'aprobado' ? '#EF4444' : '#3B82F6', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'bold' }}
-                      >
-                        <FiPower /> {emp.estado === 'aprobado' ? 'Suspender Acceso' : 'Reactivar'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {empleados.map(emp => {
+                  const badgeStyle = getBadgeStyle(emp.estado);
+                  return (
+                    <tr key={emp.id} style={{ opacity: emp.estado === 'inactivo' ? 0.6 : 1 }}>
+                      <td style={{ fontWeight: 'bold' }}>{emp.nombre} {emp.apellidos}</td>
+                      <td>{emp.correo}</td>
+                      <td>{emp.celular}</td>
+                      <td>
+                        <span 
+                          className="estado-badge" 
+                          style={{ 
+                            backgroundColor: badgeStyle.bg, 
+                            color: badgeStyle.text,
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontWeight: 'bold',
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          {badgeStyle.label}
+                        </span>
+                      </td>
+                      <td>
+                        {renderAcciones(emp)}
+                      </td>
+                    </tr>
+                  );
+                })}
                   {empleados.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center' }}>No hay empleados registrados.</td></tr>}
                 </tbody>
               </table>
@@ -346,6 +496,7 @@ const PanelAdmin = () => {
                     <th>Nombre de la Categoría</th>
                     <th>Prefijo de Código</th>
                     <th>Campos Técnicos Configurados</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -358,10 +509,28 @@ const PanelAdmin = () => {
                         <td style={{ fontWeight: 'bold' }}>{cat.nombre}</td>
                         <td><span style={{ fontFamily: 'monospace', background: '#F1F5F9', padding: '2px 6px', borderRadius: '4px' }}>{cat.prefijo_codigo}</span></td>
                         <td style={{ fontSize: '0.85rem', color: '#64748B' }}>{camposConfigurados}</td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '10px' }}>
+                            <button 
+                              onClick={() => habilitarEdicionCategoria(cat)} 
+                              style={{ background: 'none', border: 'none', color: '#3B82F6', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 'bold', fontSize: '0.85rem' }}
+                              title="Editar Categoría"
+                            >
+                              <FiEdit size={16} /> Editar
+                            </button>
+                            <button 
+                              onClick={() => ejecutarEliminarCategoria(cat.id, cat.nombre)} 
+                              style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 'bold', fontSize: '0.85rem' }}
+                              title="Eliminar Categoría"
+                            >
+                              <FiTrash2 size={16} /> Eliminar
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     );
                   })}
-                  {categorias.length === 0 && <tr><td colSpan="3" style={{ textAlign: 'center' }}>No hay categorías registradas.</td></tr>}
+                  {categorias.length === 0 && <tr><td colSpan="4" style={{ textAlign: 'center' }}>No hay categorías registradas.</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -370,7 +539,7 @@ const PanelAdmin = () => {
             {mostrarModalCategoria && (
               <div className="modal-sobrecapa" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, padding: '20px' }}>
                 <div style={{ background: 'white', padding: '30px', borderRadius: '12px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
-                  <h2 style={{ marginBottom: '10px', fontSize: '1.4rem' }}>Crear Nueva Categoría</h2>
+                  <h2 style={{ marginBottom: '10px', fontSize: '1.4rem' }}>{editandoCatId ? 'Editar Categoría' : 'Crear Nueva Categoría'}</h2>
                   <p style={{ color: '#64748B', fontSize: '0.85rem', marginBottom: '20px' }}>Configura el prefijo de código (ej: GPU para Tarjetas Gráficas) y añade las especificaciones técnicas que se le solicitarán al registrar el producto.</p>
                   
                   <form onSubmit={guardarNuevaCategoria}>
@@ -450,11 +619,20 @@ const PanelAdmin = () => {
                     </div>
 
                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', borderTop: '1px solid #E2E8F0', paddingTop: '15px' }}>
-                      <button type="button" className="btn-filtro" onClick={() => setMostrarModalCategoria(false)} style={{ margin: 0, padding: '10px 20px', fontSize: '0.9rem' }}>
+                      <button 
+                        type="button" 
+                        className="btn-filtro" 
+                        onClick={() => {
+                          setMostrarModalCategoria(false);
+                          setNuevaCat({ nombre: '', prefijo_codigo: '', campos: [] });
+                          setEditandoCatId(null);
+                        }} 
+                        style={{ margin: 0, padding: '10px 20px', fontSize: '0.9rem' }}
+                      >
                         Cancelar
                       </button>
                       <button type="submit" className="btn-seguridad" style={{ width: 'auto', padding: '10px 20px', fontSize: '0.9rem' }}>
-                        Crear Categoría
+                        {editandoCatId ? 'Guardar Cambios' : 'Crear Categoría'}
                       </button>
                     </div>
                   </form>

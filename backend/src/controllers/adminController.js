@@ -14,16 +14,49 @@ exports.obtenerUsuarios = async (req, res) => {
     }
 };
 
-// Cambiar estado de un trabajador (Suspender / Reactivar)
+// Cambiar estado de un trabajador (Aprobar, Rechazar, Suspender, Reactivar)
 exports.cambiarEstadoUsuario = async (req, res) => {
     const { id } = req.params;
-    const { estado } = req.body; // 'aprobado' o 'inactivo'
+    const { estado } = req.body; // 'aprobado', 'rechazado', 'inactivo', etc.
 
     try {
+        // 1. Obtener datos del usuario modificado para la auditoría
+        const [[usuario]] = await db.query('SELECT nombre, apellidos, correo FROM usuarios WHERE id = ?', [id]);
+        if (!usuario) {
+            return res.status(404).json({ message: "Usuario no encontrado." });
+        }
+
+        // 2. Modificar el estado del usuario
         await db.query('UPDATE usuarios SET estado = ? WHERE id = ?', [estado, id]);
-        res.json({ message: `El usuario ha sido ${estado === 'inactivo' ? 'suspendido' : 'reactivado'} correctamente.` });
+
+        // 3. Registrar en auditoría
+        const adminId = req.headers['x-usuario-id'] || 1;
+        let accionAuditoria = 'ACTUALIZACION';
+        let detalleAuditoria = '';
+
+        if (estado === 'aprobado') {
+            accionAuditoria = 'APROBACION';
+            detalleAuditoria = `Acceso de trabajador aprobado: ${usuario.nombre} ${usuario.apellidos} (${usuario.correo})`;
+        } else if (estado === 'rechazado') {
+            accionAuditoria = 'RECHAZO';
+            detalleAuditoria = `Solicitud de acceso rechazada: ${usuario.nombre} ${usuario.apellidos} (${usuario.correo})`;
+        } else if (estado === 'inactivo') {
+            accionAuditoria = 'SUSPENSION';
+            detalleAuditoria = `Acceso de trabajador suspendido: ${usuario.nombre} ${usuario.apellidos} (${usuario.correo})`;
+        } else {
+            detalleAuditoria = `Estado del usuario ${usuario.correo} cambiado a: ${estado}`;
+        }
+
+        await auditoriaService.registrarEvento(adminId, accionAuditoria, 'Usuarios', detalleAuditoria);
+
+        let mensajeExito = `El usuario ha sido actualizado a ${estado} correctamente.`;
+        if (estado === 'aprobado') mensajeExito = "El acceso del trabajador ha sido aprobado.";
+        if (estado === 'rechazado') mensajeExito = "La solicitud del trabajador ha sido rechazada.";
+        if (estado === 'inactivo') mensajeExito = "El acceso del trabajador ha sido suspendido.";
+
+        res.json({ message: mensajeExito });
     } catch (error) {
-        res.status(500).json({ message: "Error al cambiar estado", error: error.message });
+        res.status(500).json({ message: "Error al cambiar estado del usuario", error: error.message });
     }
 };
 

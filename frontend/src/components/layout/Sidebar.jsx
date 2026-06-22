@@ -59,7 +59,7 @@ const Sidebar = () => {
         <NavLink to="/analiticas" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
           <FiTrendingUp className="nav-icon" />
           <span className="nav-text">Analíticas</span>
-        </NavLink>
+        </NavLink>  
       </nav>
 
       {/* Botón de cierre de sesión al final */}

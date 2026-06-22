@@ -5,4 +5,5 @@ const categoriaController = require('../controllers/categoriaController');
 router.get('/', categoriaController.obtenerCategorias);
 router.post('/', categoriaController.crearCategoria);
 
+
 module.exports = router;

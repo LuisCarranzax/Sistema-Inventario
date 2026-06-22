@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import api from '../services/api';
-import { generarReporteMensualPDF } from '../../../backend/src/services/reporteServices';
+import { generarReporteMensualPDF, generarReportePersonalizadoPDF } from '../../../backend/src/services/reporteServices';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { FiDownload, FiTrendingUp, FiDollarSign, FiShoppingBag, FiTool } from 'react-icons/fi';
 import '../css/Analiticas.css';
@@ -19,6 +19,16 @@ const Analiticas = () => {
   const [serviciosMes, setServiciosMes] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Estados para reporte personalizado
+  const [mostrarModalPersonalizado, setMostrarModalPersonalizado] = useState(false);
+  const [reporteFiltro, setReporteFiltro] = useState({
+    modulo: 'ventas',
+    fecha_inicio: '',
+    fecha_fin: '',
+    categoria_id: 'todas'
+  });
+  const [categorias, setCategorias] = useState([]);
+
   useEffect(() => {
     cargarDatosAnaliticos();
   }, []);
@@ -27,17 +37,19 @@ const Analiticas = () => {
     try {
       setLoading(true);
       // Peticiones paralelas al backend para optimizar la velocidad de carga
-      const [resMetricas, resProductos, resVentas, resServicios] = await Promise.all([
+      const [resMetricas, resProductos, resVentas, resServicios, resCategorias] = await Promise.all([
         api.get('/analiticas/mensual'),
         api.get('/productos'),
         api.get('/ventas'),
-        api.get('/servicios')
+        api.get('/servicios'),
+        api.get('/categorias').catch(() => ({ data: [] }))
       ]);
 
       setMetricas(resMetricas.data);
       setProductosIngresados(resProductos.data);
       setVentasMes(resVentas.data);
       setServiciosMes(resServicios.data);
+      setCategorias(resCategorias.data);
     } catch (error) {
       console.error("Error al cargar datos analíticos:", error);
     } finally {
@@ -59,6 +71,45 @@ const Analiticas = () => {
     }
   ];
 
+  const handleGenerarReportePersonalizado = async (e) => {
+    e.preventDefault();
+    try {
+      showToast("Generando reporte personalizado...", "info");
+      
+      const params = new URLSearchParams();
+      params.append('modulo', reporteFiltro.modulo);
+      if (reporteFiltro.fecha_inicio) params.append('fecha_inicio', reporteFiltro.fecha_inicio);
+      if (reporteFiltro.fecha_fin) params.append('fecha_fin', reporteFiltro.fecha_fin);
+      if (reporteFiltro.modulo === 'inventario' && reporteFiltro.categoria_id) {
+        params.append('categoria_id', reporteFiltro.categoria_id);
+      }
+
+      const response = await api.get(`/analiticas/reporte-personalizado?${params.toString()}`);
+      const datos = response.data;
+
+      if (!datos || datos.length === 0) {
+        showToast("No se encontraron registros para los filtros seleccionados.", "warning");
+        return;
+      }
+
+      const usuarioNombre = user?.nombre || 'Administrador';
+      generarReportePersonalizadoPDF(
+        reporteFiltro.modulo,
+        datos,
+        reporteFiltro.fecha_inicio,
+        reporteFiltro.fecha_fin,
+        usuarioNombre
+        
+      );
+      
+      showToast("Reporte personalizado generado con éxito.", "success");
+      setMostrarModalPersonalizado(false);
+    } catch (error) {
+      console.error("Error al generar reporte personalizado:", error);
+      showToast("Error al obtener los datos del reporte.", "error");
+    }
+  };
+
   const handleDescargarReporte = () => {
     try {
       showToast("Generando reporte PDF...", "info");
@@ -74,12 +125,17 @@ const Analiticas = () => {
   return (
     <div className="analiticas-container">
       
-      {/* CABECERA CON BOTÓN DE EXPORTACIÓN */}
-      <div className="inventario-header">
+      {/* CABECERA CON BOTONES DE EXPORTACIÓN */}
+      <div className="inventario-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>Métricas Financieras y Rendimiento</h1>
-        <button className="btn-nuevo" onClick={handleDescargarReporte} style={{ backgroundColor: '#2563EB' }}>
-          <FiDownload style={{ marginRight: '8px' }} /> Exportar Cierre de Mes (PDF)
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn-filtro" onClick={() => setMostrarModalPersonalizado(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, padding: '10px 20px', fontSize: '0.9rem', backgroundColor: '#8B5CF6', color: '#FFF' }}>
+            <FiDownload /> Reporte Personalizado (PDF)
+          </button>
+          <button className="btn-nuevo" onClick={handleDescargarReporte} style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, padding: '10px 20px', fontSize: '0.9rem', backgroundColor: '#2563EB' }}>
+            <FiDownload /> Exportar Cierre de Mes (PDF)
+          </button>
+        </div>
       </div>
 
       {/* CUADRÍCULA DE SECCIONES EN TARJETAS (KPIs) */}
@@ -172,6 +228,95 @@ const Analiticas = () => {
         </div>
 
       </div>
+
+      {/* MODAL PARA REPORTE PERSONALIZADO */}
+      {mostrarModalPersonalizado && (
+        <div className="modal-sobrecapa" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, padding: '20px' }}>
+          <div style={{ background: 'white', padding: '30px', borderRadius: '12px', width: '100%', maxWidth: '500px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <h2 style={{ marginBottom: '10px', fontSize: '1.4rem', color: '#1E293B', fontWeight: 'bold' }}>Generar Reporte Personalizado (PDF)</h2>
+            <p style={{ color: '#64748B', fontSize: '0.85rem', marginBottom: '20px' }}>
+              Elige el módulo y los filtros de fechas para exportar el historial de actividades en formato PDF estructurado.
+            </p>
+            
+            <form onSubmit={handleGenerarReportePersonalizado}>
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '6px' }}>Módulo del Reporte</label>
+                <select 
+                  value={reporteFiltro.modulo} 
+                  onChange={(e) => setReporteFiltro({ ...reporteFiltro, modulo: e.target.value })} 
+                  style={{ width: '100%', padding: '10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.9rem', color: '#1E293B' }}
+                >
+                  <option value="ventas">Ventas (Punto de Venta)</option>
+                  <option value="servicios">Servicios Técnicos (Taller)</option>
+                  <option value="inventario">Inventario (Stock de Productos)</option>
+                </select>
+              </div>
+
+              {reporteFiltro.modulo === 'inventario' && (
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '6px' }}>Filtrar por Categoría</label>
+                  <select 
+                    value={reporteFiltro.categoria_id} 
+                    onChange={(e) => setReporteFiltro({ ...reporteFiltro, categoria_id: e.target.value })} 
+                    style={{ width: '100%', padding: '10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.9rem', color: '#1E293B' }}
+                  >
+                    <option value="todas">Todas las categorías</option>
+                    {categorias.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '6px' }}>Fecha Inicio</label>
+                  <input 
+                    type="date" 
+                    value={reporteFiltro.fecha_inicio} 
+                    onChange={(e) => setReporteFiltro({ ...reporteFiltro, fecha_inicio: e.target.value })} 
+                    style={{ width: '100%', padding: '10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.9rem' }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '6px' }}>Fecha Fin</label>
+                  <input 
+                    type="date" 
+                    value={reporteFiltro.fecha_fin} 
+                    onChange={(e) => setReporteFiltro({ ...reporteFiltro, fecha_fin: e.target.value })} 
+                    style={{ width: '100%', padding: '10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.9rem' }}
+                  />
+                </div>
+              </div>
+
+              <p style={{ fontSize: '0.75rem', color: '#64748B', margin: '0 0 20px 0' }}>
+                💡 Si dejas las fechas vacías, se generará el reporte completo del historial del módulo.
+              </p>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', borderTop: '1px solid #E2E8F0', paddingTop: '15px' }}>
+                <button 
+                  type="button" 
+                  className="btn-filtro" 
+                  onClick={() => {
+                    setMostrarModalPersonalizado(false);
+                    setReporteFiltro({ modulo: 'ventas', fecha_inicio: '', fecha_fin: '', categoria_id: 'todas' });
+                  }} 
+                  style={{ margin: 0, padding: '10px 20px', fontSize: '0.9rem' }}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-seguridad" 
+                  style={{ width: 'auto', padding: '10px 20px', fontSize: '0.9rem', backgroundColor: '#8B5CF6', color: 'white' }}
+                >
+                  Generar PDF
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

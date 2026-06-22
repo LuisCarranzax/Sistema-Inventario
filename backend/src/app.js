@@ -19,6 +19,9 @@ const adminRoutes = require('./routes/adminRoutes');
 app.use(cors()); // Permite peticiones cruzadas desde el frontend
 app.use(express.json()); // Permite que la API reciba datos en formato JSON desde el body
 
+const verificarEstado = require('./middlewares/verificarEstado');
+app.use(verificarEstado);
+
 
 // Prueba de conexión a la base de datos
 db.getConnection()

@@ -1,5 +1,4 @@
 const db = require('../config/db');
-const auditoriaService = require('../services/auditoriaService');
 
 
 // Función para listar productos (GET)
@@ -88,8 +87,6 @@ exports.registrarProducto = async (req, res) => {
         await connection.query(queryMovimiento, [nuevoProductoId, stock]);
 
         await connection.commit();
-        const usuarioId = req.headers['x-usuario-id'] || 1;
-        await auditoriaService.registrarEvento(usuarioId, 'REGISTRO', 'Inventario', `Producto registrado: ${nombre} (${codigoInterno})`);
         res.status(201).json({ message: "Producto registrado exitosamente.", codigo: codigoInterno });
 
     } catch (error) {
@@ -104,18 +101,15 @@ exports.registrarProducto = async (req, res) => {
 exports.eliminarProducto = async (req, res) => {
     const { id } = req.params;
     try {
-        const usuarioId = req.headers['x-usuario-id'] || 1;
-        const [[producto]] = await db.query('SELECT nombre, codigo_interno FROM productos WHERE id = ?', [id]);
-        if (producto) {
-            await db.query('DELETE FROM productos WHERE id = ?', [id]);
-            await auditoriaService.registrarEvento(usuarioId, 'ELIMINACION', 'Inventario', `Producto eliminado: ${producto.nombre} (${producto.codigo_interno})`);
-            res.json({ message: "Producto eliminado correctamente" });
-        } else {
-            res.status(404).json({ message: "Producto no encontrado" });
-        }
+        await db.query('DELETE FROM productos WHERE id = ?', [id]);
+        res.json({ message: "Producto eliminado correctamente" });
     } catch (error) {
         res.status(500).json({ message: "Error al eliminar el producto", error: error.message });
     }
+    await db.query(
+        'INSERT INTO auditoria (usuario_id, accion, modulo, detalles) VALUES (?, ?, ?, ?)',
+        [req.user.id, 'ELIMINACIÓN DE PRODUCTO', 'Inventario', `Eliminó el producto con ID ${id}`]
+    );
 };
 // Función para actualizar un producto existente (Modo Edición)
 exports.actualizarProducto = async (req, res) => {
@@ -189,8 +183,6 @@ exports.actualizarProducto = async (req, res) => {
         }
 
         await connection.commit();
-        const usuarioId = req.headers['x-usuario-id'] || 1;
-        await auditoriaService.registrarEvento(usuarioId, 'ACTUALIZACION', 'Inventario', `Producto actualizado: ${nombre}`);
         res.json({ message: "Producto actualizado correctamente." });
 
     } catch (error) {
@@ -214,9 +206,6 @@ exports.reabastecerProducto = async (req, res) => {
     try {
         await connection.beginTransaction();
 
-        const [[producto]] = await connection.query('SELECT nombre FROM productos WHERE id = ?', [id]);
-        const nombreProd = producto ? producto.nombre : 'Producto Desconocido';
-
         // 1. Aumentamos el stock
         await connection.query(
             'UPDATE productos SET stock = stock + ? WHERE id = ?',
@@ -231,8 +220,6 @@ exports.reabastecerProducto = async (req, res) => {
         );
 
         await connection.commit();
-        const usuarioId = req.headers['x-usuario-id'] || 1;
-        await auditoriaService.registrarEvento(usuarioId, 'REABASTECIMIENTO', 'Inventario', `Reabastecido stock de ${nombreProd}: +${cantidad} unidades`);
         res.json({ message: "Stock reabastecido correctamente." });
     } catch (error) {
         await connection.rollback();

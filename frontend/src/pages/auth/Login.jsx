@@ -17,6 +17,14 @@ const Login = () => {
     }
   }, [user, loading, navigate]);
 
+  useEffect(() => {
+    const suspensionMsg = localStorage.getItem('suspension_message');
+    if (suspensionMsg) {
+      setAlert({ type: 'error', message: suspensionMsg });
+      localStorage.removeItem('suspension_message');
+    }
+  }, []);
+
   const handleChange = (e) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
     setAlert(null); 

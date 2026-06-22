@@ -26,4 +26,20 @@ api.interceptors.request.use((config) => {
     return Promise.reject(error);
 });
 
+// Interceptor de respuesta para detectar expulsión / suspensión de cuenta
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 403 && error.response.data && error.response.data.cuentaSuspendida) {
+            // Guardar el mensaje de suspensión
+            localStorage.setItem('suspension_message', error.response.data.message);
+            // Limpiar la sesión localmente
+            localStorage.removeItem('user_session');
+            // Forzar redirección limpia al login
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default api;

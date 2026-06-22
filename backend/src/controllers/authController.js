@@ -60,6 +60,15 @@ exports.loginUsuario = async (req, res) => {
             return res.status(403).json({ message: "Tu solicitud de acceso fue rechazada." });
         }
 
+        if (usuario.estado === 'inactivo') {
+            const [[adminUser]] = await db.query('SELECT celular FROM usuarios WHERE rol = "administrador" LIMIT 1');
+            const adminCelular = adminUser ? adminUser.celular : '';
+            const msg = adminCelular 
+                ? `Tu cuenta ha sido suspendida. Por favor, contacta con el administrador al celular: ${adminCelular}.`
+                : "Tu cuenta ha sido suspendida. Por favor, contacta con el administrador.";
+            return res.status(403).json({ message: msg });
+        }
+
         // Validar contraseña
         const passCorrecto = await bcrypt.compare(password, usuario.password);
         if (!passCorrecto) {

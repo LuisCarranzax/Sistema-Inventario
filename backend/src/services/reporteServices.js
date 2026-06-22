@@ -247,3 +247,150 @@ export const generarReporteMensualPDF = (datosMesa, productosIngresados, ventasM
   const nombreArchivo = `Reporte_del_Mes_${datosMesa.mes.toUpperCase()}_${fechaHoy}_COMPUDOCTOR.pdf`;
   doc.save(nombreArchivo);
 };
+
+export const generarReportePersonalizadoPDF = (modulo, datos, fechaInicio, fechaFin, usuarioNombre) => {
+  const doc = new jsPDF();
+  const fechaHoy = new Date().toLocaleDateString('es-PE');
+  
+  let titulo = '';
+  let colorTema = [30, 58, 138]; // Azul marino por defecto
+  let headers = [];
+  let rows = [];
+  let foot = [];
+  let showFoot = false;
+
+  if (modulo === 'ventas') {
+    titulo = 'REPORTE DE VENTAS REGISTRADAS (POS)';
+    colorTema = [37, 99, 235]; // Azul
+    headers = [["Ticket", "Fecha", "Cliente", "Producto", "Cant.", "P. Unit.", "Pago", "Total"]];
+    
+    let totalMonto = 0;
+    let totalCant = 0;
+    
+    rows = datos.map(v => {
+      const sub = Number(v.subtotal || v.total || 0);
+      const cant = Number(v.cantidad || 1);
+      totalMonto += sub;
+      totalCant += cant;
+      return [
+        `#${v.venta_id}`,
+        v.fecha_venta ? new Date(v.fecha_venta).toLocaleDateString('es-PE') : '-',
+        v.cliente_nombre || 'Cliente General',
+        v.producto_nombre || 'Varios',
+        cant,
+        `S/ ${Number(v.precio_unitario || 0).toFixed(2)}`,
+        v.medio_pago || 'Efectivo',
+        `S/ ${sub.toFixed(2)}`
+      ];
+    });
+
+    foot = [[`TOTALES`, `", "", "", ${totalServiciosRecaudado}, "", "`, `S/ ${totalMonto.toFixed(2)}`]];
+
+  } else if (modulo === 'servicios') {
+    titulo = 'REPORTE DE SERVICIOS TECNICOS (TALLER)';
+    colorTema = [139, 92, 246]; // Morado
+    headers = [["ID", "Ingreso", "Cliente", "Equipo/Dispositivo", "Servicio Realizado", "Precio", "Pago", "Estado"]];
+
+    const totalServiciosRecaudado = datos
+    .filter(s => s.estado_pago !== 'pendiente')
+    .reduce((sum, s) => sum + Number(s.precio), 0);
+
+    let totalPrecio = 0;
+    
+    rows = datos.map(s => {
+      const precio = Number(s.precio || 0);
+      //totalPrecio += precio;
+      return [
+        `#${s.id}`,
+        s.fecha_ingreso ? new Date(s.fecha_ingreso).toLocaleDateString('es-PE') : '-',
+        s.cliente_nombre,
+        s.equipo_dispositivo,
+        parsearServicioRealizado(s.servicio_realizado),
+        `S/ ${precio.toFixed(2)}`,
+        s.estado_pago.toUpperCase(),
+        s.estado.toUpperCase()
+      ];
+
+    });
+    foot = [["TOTALES", "", "", "", "", `S/ ${totalServiciosRecaudado.toFixed(2)}`, "", ""]];
+
+  } else if (modulo === 'inventario') {
+    titulo = 'REPORTE DE STOCK E INVENTARIO';
+    colorTema = [16, 185, 129]; // Verde
+    headers = [["Código", "Nombre", "Categoría", "P. Compra", "P. Venta", "Stock", "S. Mín.", "Valor Stock"]];
+    
+    let totalCompra = 0;
+    let totalVenta = 0;
+    let totalStock = 0;
+    
+    rows = datos.map(p => {
+      const stock = Number(p.stock || 0);
+      const compra = Number(p.precio_compra || 0);
+      const venta = Number(p.precio_venta || 0);
+      const valor = stock * compra;
+      
+      totalCompra += compra;
+      totalVenta += venta;
+      totalStock += stock;
+      
+      return [
+        p.codigo_interno || 'N/A',
+        p.nombre,
+        p.categoria_nombre,
+        `S/ ${compra.toFixed(2)}`,
+        `S/ ${venta.toFixed(2)}`,
+        stock,
+        p.stock_minimo,
+        `S/ ${valor.toFixed(2)}`
+      ];
+    });
+
+    const valorTotalInventario = datos.reduce((sum, p) => sum + (Number(p.stock || 0) * Number(p.precio_compra || 0)), 0);
+    foot = [["TOTALES", "", "", "", "", totalStock, "", `S/ ${valorTotalInventario.toFixed(2)}`]];
+  }
+
+  // ENCABEZADO CORPORATIVO EN PDF
+  doc.setFillColor(...colorTema);
+  doc.rect(0, 0, 210, 30, 'F');
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(22);
+  doc.setTextColor(255, 255, 255);
+  doc.text("COMPUDOCTOR", 15, 20);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`REPORTE PERSONALIZADO`, 195, 20, { align: "right" });
+
+  // Metadatos
+  doc.setFontSize(12);
+  doc.setTextColor(30, 41, 59); // slate-800
+  doc.setFont("helvetica", "bold");
+  doc.text(titulo, 15, 42);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(71, 85, 105); // slate-600
+  
+  const fInicio = fechaInicio ? new Date(fechaInicio).toLocaleDateString('es-PE') : 'Todo el historial';
+  const fFin = fechaFin ? new Date(fechaFin).toLocaleDateString('es-PE') : 'Hasta la fecha';
+  
+  doc.text(`Periodo: ${fInicio} al ${fFin}`, 15, 48);
+  doc.text(`Generado por: ${usuarioNombre} | Fecha: ${fechaHoy}`, 15, 54);
+
+  // Tabla
+  autoTable(doc, {
+    startY: 60,
+    head: headers,
+    body: rows,
+    foot: foot,
+    showFoot:"lastPage",
+    theme: "striped",
+    styles: { fontSize: 8, cellPadding: 3 },
+    headStyles: { fillColor: colorTema, textColor: [255, 255, 255] },
+    footStyles: { fillColor: [241, 245, 249], textColor: [30, 41, 59], fontStyle: "bold" },
+  });
+
+  const nombreArchivo = `registro_${modulo}_${fechaInicio || 'inicio'}_a_${fechaFin || 'fin'}.pdf`;
+  doc.save(nombreArchivo);
+};
