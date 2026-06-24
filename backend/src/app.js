@@ -14,6 +14,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const usuarioRoutes = require('./routes/usuarioRoutes');
 const categoriaRoutes = require('./routes/categoriaRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 // Middlewares
 app.use(cors()); // Permite peticiones cruzadas desde el frontend
@@ -44,6 +45,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/categorias', categoriaRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/ia', aiRoutes);
 
 // Ruta de comprobación de salud del servidor (Health check)
 app.get('/', (req, res) => {

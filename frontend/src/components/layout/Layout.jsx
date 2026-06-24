@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import { AuthContext } from '../../context/AuthContext';
 import './Layout.css';
+import Chatbot from '../chatbot/Chatbot';
 
 const Layout = () => {
   const { user, loading } = useContext(AuthContext);
@@ -56,6 +57,7 @@ const Layout = () => {
         </main>
         
       </div>
+      <Chatbot />
     </div>
   );
 };

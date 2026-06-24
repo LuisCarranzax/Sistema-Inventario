@@ -27,6 +27,13 @@ const configuracionCategorias = {
   ]
 };
 
+const obtenerFechaLocal = () => {
+  const hoy = new Date();
+  const offset = hoy.getTimezoneOffset();
+  const hoyLocal = new Date(hoy.getTime() - (offset * 60 * 1000));
+  return hoyLocal.toISOString().split('T')[0];
+};
+
 const FormularioProducto = ({ productoAEditar, cerrarFormulario }) => {
   const { showToast } = useToast();
   const [categorias, setCategorias] = useState([]);
@@ -35,7 +42,12 @@ const FormularioProducto = ({ productoAEditar, cerrarFormulario }) => {
   const [nuevaCat, setNuevaCat] = useState({ nombre: '', prefijo_codigo: '' });
 
   const [datosGenerales, setDatosGenerales] = useState({
-    nombre: '', precio_compra: '', precio_venta: '', stock: '', stock_minimo: ''
+    nombre: '', 
+    precio_compra: '', 
+    precio_venta: '', 
+    stock: '', 
+    stock_minimo: '',
+    fecha_abastecimiento: obtenerFechaLocal()
   });
   const [detallesTecnicos, setDetallesTecnicos] = useState({});
 
@@ -58,12 +70,25 @@ const FormularioProducto = ({ productoAEditar, cerrarFormulario }) => {
   useEffect(() => {
     if (productoAEditar) {
       setCategoriaSeleccionada(productoAEditar.categoria_nombre);
+      
+      let fechaFormateada = '';
+      if (productoAEditar.fecha_abastecimiento) {
+        try {
+          fechaFormateada = new Date(productoAEditar.fecha_abastecimiento).toISOString().split('T')[0];
+        } catch (e) {
+          fechaFormateada = productoAEditar.fecha_abastecimiento.substring(0, 10);
+        }
+      } else {
+        fechaFormateada = obtenerFechaLocal();
+      }
+
       setDatosGenerales({
         nombre: productoAEditar.nombre,
         precio_compra: productoAEditar.precio_compra,
         precio_venta: productoAEditar.precio_venta,
         stock: productoAEditar.stock,
-        stock_minimo: productoAEditar.stock_minimo
+        stock_minimo: productoAEditar.stock_minimo,
+        fecha_abastecimiento: fechaFormateada
       });
       
       let detalles = productoAEditar.detalles_tecnicos;
@@ -137,7 +162,14 @@ const FormularioProducto = ({ productoAEditar, cerrarFormulario }) => {
       if (cerrarFormulario) {
         cerrarFormulario();
       } else {
-        setDatosGenerales({ nombre: '', precio_compra: '', precio_venta: '', stock: '', stock_minimo: '' });
+        setDatosGenerales({ 
+          nombre: '', 
+          precio_compra: '', 
+          precio_venta: '', 
+          stock: '', 
+          stock_minimo: '',
+          fecha_abastecimiento: obtenerFechaLocal()
+        });
         setCategoriaSeleccionada('');
         setDetallesTecnicos({});
       }
@@ -241,6 +273,17 @@ const FormularioProducto = ({ productoAEditar, cerrarFormulario }) => {
                 <label>Stock Mínimo (Alerta)</label>
                 <input type="number" name="stock_minimo" value={datosGenerales.stock_minimo} onChange={handleGeneralChange} required />
               </div>
+            </div>
+
+            <div className="input-group">
+              <label>Fecha de Ingreso / Abastecimiento</label>
+              <input 
+                type="date" 
+                name="fecha_abastecimiento" 
+                value={datosGenerales.fecha_abastecimiento} 
+                onChange={handleGeneralChange} 
+                required 
+              />
             </div>
 
             {camposDinamicos && camposDinamicos.length > 0 && (

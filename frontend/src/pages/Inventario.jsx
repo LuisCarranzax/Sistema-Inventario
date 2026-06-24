@@ -49,8 +49,14 @@ const Inventario = () => {
   // NUEVO: Función para formatear fechas (ej: "13/05/2026")
   const formatearFecha = (fechaISO) => {
     if (!fechaISO) return 'N/A';
+    // Si viene en formato YYYY-MM-DD, lo formateamos directamente
+    if (typeof fechaISO === 'string' && fechaISO.match(/^\d{4}-\d{2}-\d{2}/)) {
+      const parts = fechaISO.substring(0, 10).split('-');
+      return `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
+    }
     const fecha = new Date(fechaISO);
-    return fecha.toLocaleDateString('es-PE'); // Formato de Perú (Día/Mes/Año)
+    const utcDate = new Date(fecha.getUTCFullYear(), fecha.getUTCMonth(), fecha.getUTCDate());
+    return utcDate.toLocaleDateString('es-PE');
   };
 
   // NUEVO: Función para abrir el formulario en "Modo Edición"

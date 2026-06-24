@@ -30,7 +30,8 @@ exports.registrarProducto = async (req, res) => {
         stock, 
         stock_minimo, 
         categoria, // El nombre en texto que llega del select de React (Ej: 'Mouse')
-        detalles_tecnicos 
+        detalles_tecnicos,
+        fecha_abastecimiento
     } = req.body;
     const connection = await db.getConnection();
     try {
@@ -64,17 +65,16 @@ exports.registrarProducto = async (req, res) => {
         const detallesJSON = JSON.stringify(detalles_tecnicos || {});
 
         // 4. Inserción en la base de datos
-        // Asignamos automáticamente la fecha de hoy a fecha_abastecimiento
         await connection.beginTransaction();
 
         // 1. Guardar en la tabla productos (tu código actual)
         const queryProducto = `
             INSERT INTO productos 
-            (codigo_interno, nombre, precio_compra, precio_venta, stock, stock_minimo, categoria_id, detalles_tecnicos) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (codigo_interno, nombre, precio_compra, precio_venta, stock, stock_minimo, categoria_id, detalles_tecnicos, fecha_abastecimiento) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         const [resultProducto] = await connection.query(queryProducto, [
-            codigoInterno, nombre, precio_compra, precio_venta, stock, stock_minimo, categoriaId, detallesJSON
+            codigoInterno, nombre, precio_compra, precio_venta, stock, stock_minimo, categoriaId, detallesJSON, fecha_abastecimiento || null
         ]);
 
         const nuevoProductoId = resultProducto.insertId;
@@ -121,7 +121,8 @@ exports.actualizarProducto = async (req, res) => {
         stock, 
         stock_minimo, 
         categoria, 
-        detalles_tecnicos 
+        detalles_tecnicos,
+        fecha_abastecimiento
     } = req.body;
 
     const connection = await db.getConnection();
@@ -156,7 +157,8 @@ exports.actualizarProducto = async (req, res) => {
                 stock = ?, 
                 stock_minimo = ?, 
                 categoria_id = ?, 
-                detalles_tecnicos = ?
+                detalles_tecnicos = ?,
+                fecha_abastecimiento = ?
             WHERE id = ?
         `;
 
@@ -168,6 +170,7 @@ exports.actualizarProducto = async (req, res) => {
             stock_minimo, 
             categoriaId, 
             detallesJSON, 
+            fecha_abastecimiento || null,
             id
         ]);
 
