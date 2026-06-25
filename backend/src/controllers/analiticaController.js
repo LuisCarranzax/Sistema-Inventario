@@ -16,7 +16,7 @@ exports.obtenerMetricasMensuales = async (req, res) => {
               AND YEAR(v.fecha_venta) = YEAR(CURRENT_DATE())
         `;
 
-        // 2. Ingresos por Servicios Técnicos del mes actual (aquí el ingreso es directo)
+        // 2. Ingresos por Servicios Técnicos del mes actual 
         const queryServicios = `
             SELECT 
                 IFNULL(SUM(precio), 0) AS ingresos_servicios

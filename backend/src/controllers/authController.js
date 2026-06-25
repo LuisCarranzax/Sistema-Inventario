@@ -85,16 +85,12 @@ exports.loginUsuario = async (req, res) => {
     }
 };
 
-// Asegúrate de tener importado el emailService arriba
-
-
 exports.aprobarUsuario = async (req, res) => {
     const { id } = req.params;
     try {
         const [usuarios] = await db.query("SELECT nombre, correo, estado FROM usuarios WHERE id = ?", [id]);
         if (usuarios.length === 0) return res.status(404).send('Usuario no encontrado');
         
-        // EL CANDADO: Si ya no está pendiente, bloqueamos la acción
         if (usuarios[0].estado !== 'pendiente') {
             return res.send('<h2 style="color: #f59e0b; text-align: center; margin-top: 50px;">⚠️ Esta solicitud ya fue procesada anteriormente.</h2>');
         } 
@@ -124,11 +120,10 @@ exports.rechazarUsuario = async (req, res) => {
     }
 };
 
-// PASO 1: Generar código (o reutilizar el activo) y enviarlo por correo
 exports.solicitarRecuperacion = async (req, res) => {
     const { email } = req.body;
     try {
-        // 1. Buscamos al usuario incluyendo sus datos de recuperación actuales
+        // Buscamos al usuario incluyendo sus datos de recuperación actuales
         const [usuarios] = await db.query(
             "SELECT id, codigo_recuperacion, expira_codigo FROM usuarios WHERE correo = ?", 
             [email]
@@ -140,7 +135,7 @@ exports.solicitarRecuperacion = async (req, res) => {
 
         const usuario = usuarios[0];
 
-        // 2. EL CANDADO INTELIGENTE: Verificar si ya existe un código activo
+        //  Verificar si ya existe un código activo
         // Comparamos la fecha de expiración guardada con la fecha actual del servidor
         if (usuario.codigo_recuperacion && new Date(usuario.expira_codigo) > new Date()) {
             return res.status(200).json({ 
@@ -148,7 +143,7 @@ exports.solicitarRecuperacion = async (req, res) => {
             });
         }
 
-        // 3. Si no tiene código o ya expiró (pasaron los 15 min), generamos uno nuevo
+        // Si no tiene código o ya expiró (pasaron los 15 min), generamos uno nuevo
         const codigoOTP = Math.floor(100000 + Math.random() * 900000).toString();
 
         await db.query(`
@@ -167,7 +162,6 @@ exports.solicitarRecuperacion = async (req, res) => {
     }
 };
 
-// PASO 2: Verificar que el código sea correcto y no haya expirado
 exports.verificarOTP = async (req, res) => {
     const { email, otpCode } = req.body;
     try {
@@ -187,7 +181,6 @@ exports.verificarOTP = async (req, res) => {
     }
 };
 
-// PASO 3: Guardar la nueva contraseña
 exports.restablecerPassword = async (req, res) => {
     const { email, otpCode, newPassword } = req.body;
     try {

@@ -29,13 +29,13 @@ exports.registrarProducto = async (req, res) => {
         precio_venta, 
         stock, 
         stock_minimo, 
-        categoria, // El nombre en texto que llega del select de React (Ej: 'Mouse')
+        categoria, 
         detalles_tecnicos,
         fecha_abastecimiento
     } = req.body;
     const connection = await db.getConnection();
     try {
-        // 1. Buscar el ID y el prefijo de la categoría en la base de datos
+        // Buscar el ID y el prefijo de la categoría en la base de datos
         const [categoriasDb] = await db.query(
             'SELECT id, prefijo_codigo FROM categorias WHERE nombre = ?', 
             [categoria]
@@ -50,7 +50,7 @@ exports.registrarProducto = async (req, res) => {
         const categoriaId = categoriasDb[0].id;
         const prefijo = categoriasDb[0].prefijo_codigo;
 
-        // 2. Generar el código interno dinámico (Ej: MOU-001)
+        // Generar el código interno dinámico (Ej: MOU-001)
         // Contamos cuántos productos existen en esta categoría específica
         const [conteo] = await db.query(
             'SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', 

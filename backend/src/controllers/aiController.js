@@ -4,11 +4,6 @@ const db = require('../config/db');
 // 1. Inicializamos Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// 2. Definimos las "Herramientas" (Function Declarations)
-// Le explicamos a Gemini qué funciones tiene disponibles y qué devuelven
-// ... tus importaciones (genAI, db)
-
-// 1. Añadimos la nueva herramienta al "diccionario" de la IA
 const herramientasDeBaseDeDatos = {
   functionDeclarations: [
     {
@@ -19,11 +14,11 @@ const herramientasDeBaseDeDatos = {
       name: "obtenerResumenVentasHoy",
       description: "Obtiene el total de ingresos y la cantidad de ventas realizadas en el día actual.",
     },
-    // ---> NUEVA HERRAMIENTA <---
     {
       name: "obtenerServiciosPendientes",
       description: "Obtiene la lista de equipos y servicios técnicos que actualmente están pendientes (en estado 'en_revision' o 'agendado'). Útil para saber qué falta reparar o instalar.",
     }
+
   ]
 };
 
@@ -38,7 +33,6 @@ const ejecutarObtenerResumenVentasHoy = async () => {
     return ventas[0];
 };
 
-// ---> NUEVA CONSULTA SQL <---
 const ejecutarObtenerServiciosPendientes = async () => {
     const [servicios] = await db.query(`
         SELECT id, cliente_nombre, equipo_dispositivo, servicio_realizado, estado 
@@ -54,7 +48,7 @@ exports.procesarChat = async (req, res) => {
 
     try {
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.5-flash", // O 3.1-flash-lite según lo que estés usando
+            model: "gemini-2.5-flash", // o cualquier modelo
             tools: [herramientasDeBaseDeDatos],
             systemInstruction: "Eres COMPU-BOT, el asesor técnico y financiero del sistema ERP de COMPUDOCTOR. Tu trabajo es analizar los datos del inventario y servicios para dar recomendaciones proactivas. Tienes herramientas para consultar la base de datos. Sé conciso, profesional y amigable. Si el usuario pregunta algo fuera del contexto del negocio, niégate cortésmente."
         });
@@ -67,7 +61,6 @@ exports.procesarChat = async (req, res) => {
             const functionName = call[0].name;
             let dbResult = null;
 
-            // ---> ACTUALIZAMOS EL IF PARA INCLUIR LA NUEVA HERRAMIENTA <---
             if (functionName === "obtenerProductosBajoStock") {
                 dbResult = await ejecutarObtenerProductosBajoStock();
             } else if (functionName === "obtenerResumenVentasHoy") {

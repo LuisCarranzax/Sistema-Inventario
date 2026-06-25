@@ -4,11 +4,11 @@ exports.obtenerDatosDashboard = async (req, res) => {
     try {
         const usuarioId = req.headers['x-usuario-id'] || 1;
 
-        // 0. Obtener rol de este usuario para filtrar la actividad
+        // Obtener rol de este usuario para filtrar la actividad
         const [[userRow]] = await db.query('SELECT rol FROM usuarios WHERE id = ?', [usuarioId]);
         const userRole = userRow ? userRow.rol : 'trabajador';
 
-        // 1. Ingresos y Ventas de HOY
+        // Ingresos y Ventas de HOY
         const queryVentasHoy = `
             SELECT 
                 COUNT(id) as total_ventas,
@@ -17,7 +17,7 @@ exports.obtenerDatosDashboard = async (req, res) => {
             WHERE DATE(fecha_venta) = CURDATE() AND es_proforma = FALSE
         `;
 
-        // 2. Ingresos y Servicios de HOY
+        // Ingresos y Servicios de HOY
         const queryServiciosHoy = `
             SELECT 
                 COUNT(id) as total_servicios,
@@ -26,7 +26,7 @@ exports.obtenerDatosDashboard = async (req, res) => {
             WHERE DATE(fecha_ingreso) = CURDATE()
         `;
 
-        // 3. Semáforo de Stock (Solo productos en alerta: Rojo o Amarillo)
+        // Semáforo de Stock (Solo productos en alerta: Rojo o Amarillo)
         const queryAlertasStock = `
             SELECT id, codigo_interno, nombre, stock, stock_minimo 
             FROM productos 
@@ -35,12 +35,12 @@ exports.obtenerDatosDashboard = async (req, res) => {
             LIMIT 8
         `;
 
-        // 4. Actividad Reciente desde Auditoría
+        // Actividad Reciente desde Auditoría
         let queryActividadReciente = '';
         let paramsActividad = [];
 
         if (userRole === 'administrador') {
-            // El administrador ve toda la actividad
+            //El administrador ve toda la actividad
             queryActividadReciente = `
                 SELECT a.*, u.nombre, u.apellidos 
                 FROM auditoria a

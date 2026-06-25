@@ -76,13 +76,13 @@ exports.eliminarCategoria = async (req, res) => {
     const { id } = req.params;
 
     try {
-        // 1. Obtener detalles de la categoría
+        // Obtener detalles de la categoría
         const [[categoria]] = await db.query('SELECT nombre FROM categorias WHERE id = ?', [id]);
         if (!categoria) {
             return res.status(404).json({ message: "Categoría no encontrada." });
         }
 
-        // 2. Comprobar si hay productos asociados a esta categoría
+        // Comprobar si hay productos asociados a esta categoría
         const [[{ count }]] = await db.query('SELECT COUNT(*) AS count FROM productos WHERE categoria_id = ?', [id]);
         if (count > 0) {
             return res.status(409).json({ 
@@ -90,7 +90,7 @@ exports.eliminarCategoria = async (req, res) => {
             });
         }
 
-        // 3. Eliminar la categoría
+        // Eliminar la categoría
         await db.query('DELETE FROM categorias WHERE id = ?', [id]);
 
         const usuarioId = req.headers['x-usuario-id'] || 1;

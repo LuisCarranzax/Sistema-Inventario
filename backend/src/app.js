@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config({ path: '../.env' }); // Asegura que lea el archivo .env en la raíz del backend
+require('dotenv').config({ path: '../.env' }); 
 const db = require('./config/db');
 const app = express();
 
@@ -17,8 +17,8 @@ const adminRoutes = require('./routes/adminRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 
 // Middlewares
-app.use(cors()); // Permite peticiones cruzadas desde el frontend
-app.use(express.json()); // Permite que la API reciba datos en formato JSON desde el body
+app.use(cors());
+app.use(express.json());
 
 const verificarEstado = require('./middlewares/verificarEstado');
 app.use(verificarEstado);
@@ -28,7 +28,7 @@ app.use(verificarEstado);
 db.getConnection()
     .then(connection => {
         console.log('Conexión a la base de datos MySQL establecida con éxito.');
-        connection.release(); // Liberamos la conexión de vuelta al pool
+        connection.release();
     })
     .catch(err => {
         console.error('Error al conectar a la base de datos MySQL:', err.message);

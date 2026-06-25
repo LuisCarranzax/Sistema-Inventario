@@ -67,7 +67,7 @@ const Topbar = () => {
             </Link>
 
             {/* Opciones extra si es Administrador */}
-            {user?.rol === 'administrador' && (
+            {/*user?.rol === 'administrador' &&  (
               <Link 
                 to="/admin" 
                 className="dropdown-item" 
@@ -76,8 +76,8 @@ const Topbar = () => {
                 <FiShield size={18} />
                 Panel de Admin
               </Link>
-            )}
-
+            )*/}
+            
             {/* Opción: Cerrar Sesión */}
             <button className="dropdown-item logout" onClick={handleLogout}>
               <FiLogOut size={18} />

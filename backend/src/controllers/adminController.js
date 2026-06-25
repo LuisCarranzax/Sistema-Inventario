@@ -17,10 +17,10 @@ exports.obtenerUsuarios = async (req, res) => {
 // Cambiar estado de un trabajador (Aprobar, Rechazar, Suspender, Reactivar)
 exports.cambiarEstadoUsuario = async (req, res) => {
     const { id } = req.params;
-    const { estado } = req.body; // 'aprobado', 'rechazado', 'inactivo', etc.
+    const { estado } = req.body; 
 
     try {
-        // 1. Obtener datos del usuario modificado para la auditoría
+        // 1. Obtener datos del usuario 
         const [[usuario]] = await db.query('SELECT nombre, apellidos, correo FROM usuarios WHERE id = ?', [id]);
         if (!usuario) {
             return res.status(404).json({ message: "Usuario no encontrado." });
@@ -60,7 +60,7 @@ exports.cambiarEstadoUsuario = async (req, res) => {
     }
 };
 
-// Obtener el registro de eventos (Auditoría)
+// Obtener el registro de eventos 
 exports.obtenerAuditoria = async (req, res) => {
     try {
         const query = `
@@ -76,7 +76,7 @@ exports.obtenerAuditoria = async (req, res) => {
     }
 };
 
-// Registrar un nuevo trabajador (Administrador crea directamente)
+// Registrar un nuevo trabajador 
 exports.registrarTrabajador = async (req, res) => {
     const { nombre, apellidos, correo, celular, dni, password } = req.body;
 

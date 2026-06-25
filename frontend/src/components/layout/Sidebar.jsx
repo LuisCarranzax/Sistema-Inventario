@@ -6,7 +6,9 @@ import { FiMenu,
   FiShoppingCart, 
   FiTrendingUp, 
   FiLogOut, 
-  FiTool } 
+  FiTool, 
+  FiUser,
+  FiPenTool} 
 from 'react-icons/fi';
 import { AuthContext } from '../../context/AuthContext';
 import './Layout.css';
@@ -17,6 +19,24 @@ const Sidebar = () => {
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
+  };
+
+  const navConfig = {
+    trabajador: [
+      { to: "/", label: "Dashboard", icon: FiHome },
+      { to: "/inventario", label: "Inventario", icon: FiBox },
+      { to: "/servicios", label: "Servicio Técnico", icon: FiTool },
+      { to: "/punto-venta", label: "Punto de Venta", icon: FiShoppingCart },
+      { to: "/analiticas", label: "Analíticas", icon: FiTrendingUp }
+    ],
+    administrador: [
+      { to: "/", label: "Dashboard", icon: FiHome },
+      { to: "/inventario", label: "Inventario", icon: FiBox },
+      { to: "/servicios", label: "Servicio Técnico", icon: FiTool },
+      { to: "/punto-venta", label: "Punto de Venta", icon: FiShoppingCart },
+      { to: "/analiticas", label: "Analíticas", icon: FiTrendingUp },
+      { to: "/admin", label: "Panel Admin", icon: FiUser }
+    ]
   };
 
   return (
@@ -36,39 +56,22 @@ const Sidebar = () => {
       </div>
 
       <nav className="nav-menu">
-        <NavLink to="/" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'} end>
-          <FiHome className="nav-icon" />
-          <span className="nav-text">Dashboard</span>
-        </NavLink>
-
-        <NavLink to="/inventario" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-          <FiBox className="nav-icon" />
-          <span className="nav-text">Inventario</span>
-        </NavLink>
-
-        <NavLink to="/servicios" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-          <FiTool className="nav-icon" />
-          <span className="nav-text">Servicio Técnico</span>
-        </NavLink>
-
-        <NavLink to="/punto-venta" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-          <FiShoppingCart className="nav-icon" />
-          <span className="nav-text">Punto de Venta</span>
-        </NavLink>
-
-        <NavLink to="/analiticas" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-          <FiTrendingUp className="nav-icon" />
-          <span className="nav-text">Analíticas</span>
-        </NavLink>  
+        {Object.entries(navConfig[user.rol]).map(([key, item]) => (
+          <NavLink key={key} to={item.to} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+            <item.icon className="nav-icon" />
+            <span className="nav-text">{item.label}</span>
+          </NavLink>
+        ))}
       </nav>
 
-      {/* Botón de cierre de sesión al final */}
+      {/* Botón de cierre de sesión al final 
       <div className="nav-menu" style={{ flexGrow: 0, marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
         <div className="nav-item" onClick={logout} style={{ cursor: 'pointer' }}>
           <FiLogOut className="nav-icon" />
           <span className="nav-text">Cerrar Sesión</span>
         </div>
       </div>
+      */}
 
     </aside>
   );

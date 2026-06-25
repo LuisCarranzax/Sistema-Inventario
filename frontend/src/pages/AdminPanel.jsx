@@ -370,9 +370,9 @@ const PanelAdmin = () => {
         <button className={`btn-filtro ${activeTab === 'auditoria' ? 'activo' : ''}`} onClick={() => setActiveTab('auditoria')}>
           <FiActivity style={{ marginRight: '5px' }} /> Registro de Eventos
         </button>
-        <button className={`btn-filtro ${activeTab === 'perfil' ? 'activo' : ''}`} onClick={() => setActiveTab('perfil')}>
+        {/*<button className={`btn-filtro ${activeTab === 'perfil' ? 'activo' : ''}`} onClick={() => setActiveTab('perfil')}>
           <FiUser style={{ marginRight: '5px' }} /> Mi Perfil
-        </button>
+        </button>*/}
       </div>
 
       {/* CONTENIDO DE LAS PESTAÑAS */}
