@@ -59,10 +59,26 @@ exports.obtenerDatosDashboard = async (req, res) => {
             paramsActividad = [usuarioId];
         }
 
+        // Servicios pendientes de entrega (cuyo estado no es 'entregado')
+        const queryPendientesEntrega = `
+            SELECT COUNT(id) as total 
+            FROM servicios_tecnicos 
+            WHERE estado != 'entregado'
+        `;
+
+        // Servicios pendientes de pago (cuyo estado_pago no es 'cancelado')
+        const queryPendientesPago = `
+            SELECT COUNT(id) as total 
+            FROM servicios_tecnicos 
+            WHERE estado_pago != 'cancelado'
+        `;
+
         const [[resVentas]] = await db.query(queryVentasHoy);
         const [[resServicios]] = await db.query(queryServiciosHoy);
         const [alertasStock] = await db.query(queryAlertasStock);
         const [actividad] = await db.query(queryActividadReciente, paramsActividad);
+        const [[resPendientesEntrega]] = await db.query(queryPendientesEntrega);
+        const [[resPendientesPago]] = await db.query(queryPendientesPago);
 
         res.json({
             hoy: {
@@ -73,7 +89,9 @@ exports.obtenerDatosDashboard = async (req, res) => {
                 ingreso_total: Number(resVentas.ingresos_ventas) + Number(resServicios.ingresos_servicios)
             },
             actividad_reciente: actividad,
-            alertas_stock: alertasStock
+            alertas_stock: alertasStock,
+            servicios_pendientes_entrega: resPendientesEntrega.total,
+            servicios_pendientes_pago: resPendientesPago.total
         });
 
     } catch (error) {

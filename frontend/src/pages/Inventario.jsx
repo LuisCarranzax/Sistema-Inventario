@@ -17,7 +17,7 @@ const Inventario = () => {
   const [confirmarEliminar, setConfirmarEliminar] = useState(null);
   const [reabastecerProducto, setReabastecerProducto] = useState(null);
   const [cantidadReabastecer, setCantidadReabastecer] = useState('');
-
+  const [fechaAbastecimiento, setFechaAbastecimiento] = useState(new Date().toISOString().slice(0, 16));
   const [categoriasFiltro, setCategoriasFiltro] = useState(['Todos']);
 
   useEffect(() => {
@@ -94,6 +94,7 @@ const Inventario = () => {
     if (!reabastecerProducto) return;
     const { id, nombre } = reabastecerProducto;
     const cantidad = Number(cantidadReabastecer);
+    
 
     if (isNaN(cantidad) || cantidad <= 0) {
       return showToast("Ingresa una cantidad válida mayor a 0", "error");
@@ -104,6 +105,7 @@ const Inventario = () => {
       showToast(`Stock de "${nombre}" reabastecido correctamente`, "success");
       setReabastecerProducto(null);
       cargarProductos();
+      setFechaAbastecimiento(new Date().toISOString().slice(0, 16));
     } catch (error) {
       console.error("Error al reabastecer:", error);
       showToast("Ocurrió un error al intentar reabastecer el producto.", "error");
@@ -176,7 +178,7 @@ const Inventario = () => {
                         </span>
                       </td>
                       {/* Mostrar la fecha de abastecimiento o registro */}
-                      <td>{formatearFecha(prod.fecha_abastecimiento || prod.fecha_registro)}</td>
+                      <td>{formatearFecha(prod.fecha_abastecimiento)}</td>
                       
                       {/* BOTONES DE ACCIÓN */}
                       <td>
@@ -188,7 +190,12 @@ const Inventario = () => {
                             className="btn-accion" 
                             style={{ color: '#10B981', backgroundColor: '#ECFDF5' }} 
                             title="Reabastecer" 
-                            onClick={() => setReabastecerProducto({ id: prod.id, nombre: prod.nombre, stock: prod.stock, fecha_abastecimiento: prod.fecha_abastecimiento })}
+                            onClick={() => setReabastecerProducto({
+                              id: prod.id, 
+                              nombre: prod.nombre, 
+                              stock: prod.stock, 
+                              fecha_abastecimiento: prod.fecha_abastecimiento
+                            })}
                           >
                             <FiPlusCircle size={16} />
                           </button>

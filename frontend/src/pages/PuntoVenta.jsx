@@ -4,8 +4,10 @@ import { FiSearch, FiTrash2, FiPlus, FiMinus, FiUser } from 'react-icons/fi';
 import { generarDocumentoPDF } from '../../../backend/src/services/pdfServices';
 import '../css/PuntoVenta.css';
 import '../css/Inventario.css';
+import { useToast } from '../context/ToastContext';
 
 const PuntoVenta = () => {
+  const { showToast } = useToast();
   const [productos, setProductos] = useState([]);
   const [carrito, setCarrito] = useState([]);
   const [busqueda, setBusqueda] = useState('');
@@ -94,6 +96,16 @@ const PuntoVenta = () => {
       // 3. Generamos y descargamos el PDF usando nuestro Servicio Externo
       generarDocumentoPDF(response.data.ventaId, carrito, totalVenta, esProforma, clienteNombre, metodoPago);
       
+      // NUEVO: Notificación inmediata de stock agotado
+      if (!esProforma) {
+        carrito.forEach(item => {
+          const stockRestante = Number(item.stock) - Number(item.cantidad);
+          if (stockRestante <= 0) {
+            showToast(`⚠️ ¡Alerta! El producto "${item.nombre}" se ha agotado por completo (Stock: 0).`, 'error');
+          }
+        });
+      }
+
       // 4. Limpiamos la caja registradora
       setCarrito([]);
       setBusqueda('');
