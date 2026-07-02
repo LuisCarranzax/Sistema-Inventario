@@ -1,151 +1,198 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import FormularioProducto from '../components/inventario/FormularioProducto';
-import { FiPlus, FiArrowLeft, FiEdit, FiTrash2, FiAlertCircle, FiPlusCircle } from 'react-icons/fi';
-import { useToast } from '../context/ToastContext';
+import { FiPlus, FiEdit2, FiTrash2, FiDownload } from 'react-icons/fi';
+import { exportarInventarioExcel, exportarInventarioPDF } from '../services/exportServices';
 import '../css/Inventario.css';
 
 const Inventario = () => {
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [productos, setProductos] = useState([]);
-  const [filtroActivo, setFiltroActivo] = useState('Todos');
-  
-  // NUEVO: Estado para saber si estamos editando un producto
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [productoAEditar, setProductoAEditar] = useState(null);
+  const [filtroCategoria, setFiltroCategoria] = useState('Todos');
+  
+  
+  // NUEVOS ESTADOS: Filtros de Fecha y Dropdown de Exportación
+  const [rangoFecha, setRangoFecha] = useState('Este Mes');
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
+  const [menuExportar, setMenuExportar] = useState(false);
+  
 
-  const { showToast } = useToast();
-  const [confirmarEliminar, setConfirmarEliminar] = useState(null);
-  const [reabastecerProducto, setReabastecerProducto] = useState(null);
-  const [cantidadReabastecer, setCantidadReabastecer] = useState('');
-  const [fechaAbastecimiento, setFechaAbastecimiento] = useState(new Date().toISOString().slice(0, 16));
-  const [categoriasFiltro, setCategoriasFiltro] = useState(['Todos']);
+
+
+  // Referencia para cerrar el dropdown si hacen clic afuera
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
-    if (!mostrarFormulario) {
-      cargarProductos();
-      cargarCategorias();
-    }
+    if (!mostrarFormulario) cargarInventario();
   }, [mostrarFormulario]);
 
-  const cargarCategorias = async () => {
-    try {
-      const response = await api.get('/categorias');
-      const nombres = response.data.map(c => c.nombre);
-      setCategoriasFiltro(['Todos', ...nombres]);
-    } catch (error) {
-      console.error("Error al cargar categorías:", error);
-    }
-  };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setMenuExportar(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  const cargarProductos = async () => {
+  const cargarInventario = async () => {
     try {
       const response = await api.get('/productos');
       setProductos(response.data);
     } catch (error) {
-      console.error("Error al cargar el inventario:", error);
+      console.error("Error al cargar el inventario", error);
     }
   };
 
-  // NUEVO: Función para formatear fechas (ej: "13/05/2026")
-  const formatearFecha = (fechaISO) => {
-    if (!fechaISO) return 'N/A';
-    // Si viene en formato YYYY-MM-DD, lo formateamos directamente
-    if (typeof fechaISO === 'string' && fechaISO.match(/^\d{4}-\d{2}-\d{2}/)) {
-      const parts = fechaISO.substring(0, 10).split('-');
-      return `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
+  const handleEliminar = async (id, nombre) => {
+    if (window.confirm(`¿Estás seguro de eliminar el producto: ${nombre}?`)) {
+      try {
+        await api.delete(`/productos/${id}`);
+        cargarInventario();
+      } catch (error) {
+        alert("Error al eliminar el producto");
+      }
     }
-    const fecha = new Date(fechaISO);
-    const utcDate = new Date(fecha.getUTCFullYear(), fecha.getUTCMonth(), fecha.getUTCDate());
-    return utcDate.toLocaleDateString('es-PE');
   };
 
-  // NUEVO: Función para abrir el formulario en "Modo Edición"
-  const handleEditar = (producto) => {
+  const abrirEdicion = (producto) => {
     setProductoAEditar(producto);
     setMostrarFormulario(true);
   };
 
-  // NUEVO: Función para abrir el formulario en "Modo Creación"
-  const handleNuevoProducto = () => {
-    setProductoAEditar(null); // Limpiamos cualquier dato anterior
-    setMostrarFormulario(true);
+  const cerrarFormulario = () => {
+    setProductoAEditar(null);
+    setMostrarFormulario(false);
   };
 
-  // NUEVO: Lógica de eliminación con Modal de Confirmación
-  const handleEliminarClick = (id, nombre) => {
-    setConfirmarEliminar({ id, nombre });
-  };
+  // ==========================================
+  // LÓGICA DE FILTRADO (Categoría + Fechas)
+  // ==========================================
+  const categorias = ['Todos', ...new Set(productos.map(p => p.categoria_nombre))];
 
-  const ejecutarEliminar = async () => {
-    if (!confirmarEliminar) return;
-    const { id, nombre } = confirmarEliminar;
-    try {
-      await api.delete(`/productos/${id}`); // Petición DELETE a tu backend
-      showToast(`Producto "${nombre}" eliminado correctamente`, 'success');
-      setConfirmarEliminar(null);
-      cargarProductos(); // Recargamos la tabla automáticamente
-    } catch (error) {
-      console.error("Error al eliminar:", error);
-      showToast('Ocurrió un error al intentar eliminar el producto.', 'error');
-    }
-  };
-
-  const ejecutarReabastecimiento = async () => {
-    if (!reabastecerProducto) return;
-    const { id, nombre } = reabastecerProducto;
-    const cantidad = Number(cantidadReabastecer);
+  const productosFiltrados = productos.filter(prod => {
+    // 1. Filtro por Categoría
+    const coincideCategoria = filtroCategoria === 'Todos' || prod.categoria_nombre === filtroCategoria;
     
-
-    if (isNaN(cantidad) || cantidad <= 0) {
-      return showToast("Ingresa una cantidad válida mayor a 0", "error");
+    // 2. Filtro por Fechas (Rango Inteligente Inmune a Desfases Horarios)
+    if (rangoFecha === 'Todos los tiempos') {
+      return coincideCategoria;
     }
 
-    try {
-      await api.put(`/productos/${id}/reabastecer`, { cantidad });
-      showToast(`Stock de "${nombre}" reabastecido correctamente`, "success");
-      setReabastecerProducto(null);
-      cargarProductos();
-      setFechaAbastecimiento(new Date().toISOString().slice(0, 16));
-    } catch (error) {
-      console.error("Error al reabastecer:", error);
-      showToast("Ocurrió un error al intentar reabastecer el producto.", "error");
+    if (!prod.fecha_abastecimiento) {
+      return false;
     }
+
+    // Parseo seguro en hora local (AAAA-MM-DD)
+    const dateStr = prod.fecha_abastecimiento.split('T')[0];
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const fechaProd = new Date(year, month - 1, day);
+    
+    const hoy = new Date();
+    const hoyLocal = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    let coincideFecha = true;
+
+    if (rangoFecha === 'Hoy') {
+      coincideFecha = fechaProd.getTime() === hoyLocal.getTime();
+    } else if (rangoFecha === 'Ayer') {
+      const ayerLocal = new Date(hoyLocal);
+      ayerLocal.setDate(ayerLocal.getDate() - 1);
+      coincideFecha = fechaProd.getTime() === ayerLocal.getTime();
+    } else if (rangoFecha === 'Este Mes') {
+      coincideFecha = fechaProd.getMonth() === hoy.getMonth() && fechaProd.getFullYear() === hoy.getFullYear();
+    } else if (rangoFecha === 'Personalizado') {
+      if (fechaInicio && fechaFin) {
+        const [iYear, iMonth, iDay] = fechaInicio.split('-').map(Number);
+        const inicio = new Date(iYear, iMonth - 1, iDay);
+        
+        const [fYear, fMonth, fDay] = fechaFin.split('-').map(Number);
+        const fin = new Date(fYear, fMonth - 1, fDay);
+        
+        coincideFecha = fechaProd >= inicio && fechaProd <= fin;
+      } else {
+        coincideFecha = false;
+      }
+    }
+
+    return coincideCategoria && coincideFecha;
+  });
+
+  // ==========================================
+  // LÓGICA DE EXPORTACIÓN (Llamando al Servicio)
+  // ==========================================
+  const exportarExcel = () => {
+    exportarInventarioExcel(productosFiltrados, rangoFecha);
+    setMenuExportar(false);
   };
 
-  // Filtro local para la tabla
-  const productosFiltrados = filtroActivo === 'Todos' 
-    ? productos 
-    // Asegúrate de que el backend te envíe el nombre de la categoría para poder filtrar
-    : productos.filter(prod => prod.categoria_nombre === filtroActivo);
+  const exportarPDF = () => {
+    exportarInventarioPDF(productosFiltrados, rangoFecha, filtroCategoria);
+    setMenuExportar(false);
+  };
 
   return (
     <div className="inventario-container">
-      <div className="inventario-header">
-        <h1>{mostrarFormulario ? (productoAEditar ? 'Editar Producto' : 'Registrar Nuevo Producto') : 'Gestión de Inventario'}</h1>
+      
+      <div className="inventario-header" style={{ alignItems: 'flex-start' }}>
+        <div>
+          <h1>Gestión de Inventario</h1>
+          <p style={{ color: '#64748B', fontSize: '0.9rem', marginTop: '5px' }}>
+            Visualiza y exporta los ingresos de productos según la fecha.
+          </p>
+        </div>
         
-        {mostrarFormulario ? (
-          <button className="btn-filtro" onClick={() => setMostrarFormulario(false)}>
-            <FiArrowLeft /> Volver a la lista
-          </button>
-        ) : (
-          <button className="btn-nuevo" onClick={handleNuevoProducto}>
-            <FiPlus size={20} /> Nuevo Producto
-          </button>
+        {!mostrarFormulario && (
+          <div style={{ display: 'flex', gap: '15px' }}>
+            {/* NUEVO: Menú Dropdown de Exportación */}
+            <div className="exportar-container" ref={dropdownRef}>
+              <button className="btn-exportar" onClick={() => setMenuExportar(!menuExportar)}>
+                <FiDownload /> Exportar ▼
+              </button>
+              {menuExportar && (
+                <div className="dropdown-exportar">
+                  <button className="dropdown-item-export" onClick={exportarPDF}>📄 Descargar PDF</button>
+                  <button className="dropdown-item-export" onClick={exportarExcel}>📊 Descargar Excel</button>
+                </div>
+              )}
+            </div>
+
+            <button className="btn-nuevo" onClick={() => { setProductoAEditar(null); setMostrarFormulario(true); }}>
+              <FiPlus size={20} /> Nuevo Producto
+            </button>
+          </div>
         )}
       </div>
 
       {mostrarFormulario ? (
-        // Pasamos el producto a editar como "prop" al formulario
-        <FormularioProducto productoAEditar={productoAEditar} cerrarFormulario={() => setMostrarFormulario(false)} />
+        <FormularioProducto cerrarFormulario={cerrarFormulario} productoEditando={productoAEditar} />
       ) : (
         <>
+          {/* NUEVO: Panel de Filtros Inteligentes */}
+          <div className="filtros-fecha">
+            <span style={{ fontWeight: 'bold', color: '#475569', fontSize: '0.9rem' }}>Filtrar por Fecha de Ingreso:</span>
+            <select className="select-fecha" value={rangoFecha} onChange={(e) => setRangoFecha(e.target.value)}>
+              <option value="Todos los tiempos">Todos los tiempos</option>
+              <option value="Hoy">Hoy</option>
+              <option value="Ayer">Ayer</option>
+              <option value="Este Mes">Este Mes</option>
+              <option value="Personalizado">Rango Personalizado...</option>
+            </select>
+
+            {rangoFecha === 'Personalizado' && (
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <input type="date" className="input-fecha" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} />
+                <span style={{ color: '#64748B' }}>hasta</span>
+                <input type="date" className="input-fecha" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} />
+              </div>
+            )}
+          </div>
+
           <div className="filtros-container">
-            {categoriasFiltro.map(cat => (
-              <button 
-                key={cat}
-                className={`btn-filtro ${filtroActivo === cat ? 'activo' : ''}`}
-                onClick={() => setFiltroActivo(cat)}
-              >
+            {categorias.map(cat => (
+              <button key={cat} className={`btn-filtro ${filtroCategoria === cat ? 'activo' : ''}`} onClick={() => setFiltroCategoria(cat)}>
                 {cat}
               </button>
             ))}
@@ -157,137 +204,45 @@ const Inventario = () => {
                 <tr>
                   <th>Código</th>
                   <th>Producto</th>
+                  <th>Precio Compra</th>
                   <th>Precio Venta</th>
                   <th>Stock</th>
-                  <th>Estado</th>
-                  <th>Fecha Ingreso</th>
+                  <th>Ingresado el</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {productosFiltrados.length > 0 ? (
-                  productosFiltrados.map((prod) => (
-                    <tr key={prod.id}>
-                      <td style={{ fontWeight: 'bold', color: '#64748B' }}>{prod.codigo_interno}</td>
-                      <td>{prod.nombre}</td>
-                      <td>S/ {Number(prod.precio_venta).toFixed(2)}</td>
-                      <td>{prod.stock}</td>
-                      <td>
-                        <span className={`stock-badge ${prod.stock <= prod.stock_minimo ? 'stock-low' : 'stock-ok'}`}>
-                          {prod.stock === 0 ? 'Agotado' : prod.stock <= prod.stock_minimo ? 'Bajo' : 'Óptimo'}
-                        </span>
-                      </td>
-                      {/* Mostrar la fecha de abastecimiento o registro */}
-                      <td>{formatearFecha(prod.fecha_abastecimiento)}</td>
-                      
-                      {/* BOTONES DE ACCIÓN */}
-                      <td>
-                        <div className="acciones-col">
-                          <button className="btn-accion btn-editar" title="Editar" onClick={() => handleEditar(prod)}>
-                            <FiEdit size={16} />
-                          </button>
-                          <button 
-                            className="btn-accion" 
-                            style={{ color: '#10B981', backgroundColor: '#ECFDF5' }} 
-                            title="Reabastecer" 
-                            onClick={() => setReabastecerProducto({
-                              id: prod.id, 
-                              nombre: prod.nombre, 
-                              stock: prod.stock, 
-                              fecha_abastecimiento: prod.fecha_abastecimiento
-                            })}
-                          >
-                            <FiPlusCircle size={16} />
-                          </button>
-                          <button className="btn-accion btn-eliminar" title="Eliminar" onClick={() => handleEliminarClick(prod.id, prod.nombre)}>
-                            <FiTrash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', padding: '30px' }}>
-                      No se encontraron productos.
+                {productosFiltrados.map((prod) => (
+                  <tr key={prod.id}>
+                    <td style={{ fontWeight: 'bold', color: '#64748B' }}>{prod.codigo_interno}</td>
+                    <td>{prod.nombre}</td>
+                    <td>S/ {Number(prod.precio_compra).toFixed(2)}</td>
+                    <td>S/ {Number(prod.precio_venta).toFixed(2)}</td>
+                    <td>
+                      <span className={`estado-badge ${prod.stock <= prod.stock_minimo ? 'estado-rojo' : 'estado-reparado'}`} style={{ backgroundColor: prod.stock <= prod.stock_minimo ? '#FEE2E2' : '#DCFCE7', color: prod.stock <= prod.stock_minimo ? '#991B1B' : '#166534' }}>
+                        {prod.stock} und.
+                      </span>
+                    </td>
+                    <td style={{ fontSize: '0.85rem' }}>{new Date(prod.fecha_abastecimiento).toLocaleDateString('es-PE')}</td>
+                    <td>
+                      <div className="acciones-col">
+                        <button className="btn-accion btn-editar" title="Editar" onClick={() => abrirEdicion(prod)}>
+                          <FiEdit2 size={16} />
+                        </button>
+                        <button className="btn-accion btn-eliminar" title="Eliminar" onClick={() => handleEliminar(prod.id, prod.nombre)}>
+                          <FiTrash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
+                ))}
+                {productosFiltrados.length === 0 && (
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>No se encontraron productos en estas fechas o categoría.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
         </>
-      )}
-
-      {/* Modal de Confirmación de Eliminación */}
-      {confirmarEliminar && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <FiAlertCircle size={40} className="modal-warning-icon" />
-              <h2>¿Confirmar eliminación?</h2>
-            </div>
-            <p>
-              ¿Estás seguro de que deseas eliminar el producto <strong>"{confirmarEliminar.nombre}"</strong>?
-              Esta acción no se puede deshacer.
-            </p>
-            <div className="modal-actions">
-              <button className="btn-cancelar" onClick={() => setConfirmarEliminar(null)}>
-                Cancelar
-              </button>
-              <button className="btn-confirmar-eliminar" onClick={ejecutarEliminar}>
-                Eliminar Producto
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Re-abastecimiento Rápido */}
-      {reabastecerProducto && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '400px' }}>
-            <div className="modal-header">
-              <FiPlusCircle size={40} style={{ color: '#10B981' }} />
-              <h2>Reabastecer Stock</h2>
-            </div>
-            <p style={{ fontSize: '0.9rem', color: '#475569', margin: '10px 0 20px 0' }}>
-              Ingresa la cantidad a añadir para el producto <strong>"{reabastecerProducto.nombre}"</strong>.<br />
-              <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>(Stock actual: {reabastecerProducto.stock} unidades)</span>
-            </p>
-            <div className="input-group" style={{ marginBottom: '20px' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#64748B' }}>CANTIDAD A SUMAR</label>
-              <input 
-                type="number" 
-                min="1" 
-                value={cantidadReabastecer} 
-                onChange={(e) => setCantidadReabastecer(e.target.value)} 
-                placeholder="Ej: 15"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #CBD5E1',
-                  borderRadius: '8px',
-                  fontSize: '0.95rem',
-                  outline: 'none',
-                  marginTop: '6px'
-                }}
-              />
-            </div>
-            <div className="modal-actions">
-              <button className="btn-cancelar" onClick={() => setReabastecerProducto(null)}>
-                Cancelar
-              </button>
-              <button 
-                className="btn-confirmar-eliminar" 
-                style={{ backgroundColor: '#10B981', color: 'white' }} 
-                onClick={ejecutarReabastecimiento}
-              >
-                Confirmar
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import FormularioServicio from '../components/servicios/FormularioServicio';
-import { FiPlus, FiArrowLeft, FiTrash2, FiCheckCircle, FiTool, FiAlertCircle } from 'react-icons/fi';
+import { FiPlus, FiArrowLeft, FiTrash2, FiCheckCircle, FiTool, FiAlertCircle, FiDownload } from 'react-icons/fi';
+import { exportarServiciosExcel, exportarServiciosPDF } from '../services/exportServices';
 import '../css/Servicios.css';
+import '../css/Inventario.css';
 import { useToast } from '../context/ToastContext';
 
 const Servicios = () => {
@@ -14,6 +16,15 @@ const Servicios = () => {
   const [filtroPago, setFiltroPago] = useState('Todos');
   const [confirmarEliminar, setConfirmarEliminar] = useState(null);
   const [servicioDetalle, setServicioDetalle] = useState(null);
+
+  // NUEVOS ESTADOS: Filtros de Fecha y Dropdown de Exportación
+  const [rangoFecha, setRangoFecha] = useState('Este Mes');
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
+  const [menuExportar, setMenuExportar] = useState(false);
+
+  // Referencia para cerrar el dropdown si hacen clic afuera
+  const dropdownRef = useRef(null);
 
   // ESTADOS PARA LA EDICIÓN DE PAGO EN EL MODAL
   const [editPagoEstado, setEditPagoEstado] = useState('cancelado');
@@ -75,6 +86,16 @@ const Servicios = () => {
     'Agendados': 'agendado',
     'Instalados': 'instalado'
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setMenuExportar(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (!mostrarFormulario) {
@@ -150,13 +171,64 @@ const Servicios = () => {
     }
   };
 
-  // Lógica de filtrado combinada (Estado, Equipo, Pago)
+  // Lógica de filtrado combinada (Estado, Equipo, Pago, Fechas)
   const serviciosFiltrados = servicios.filter(serv => {
     const matchesEstado = filtroEstado === 'Todos' || serv.estado === mapeoEstados[filtroEstado];
     const matchesEquipo = filtroEquipo === 'Todos' || (serv.equipo_dispositivo && serv.equipo_dispositivo.startsWith(filtroEquipo));
     const matchesPago = filtroPago === 'Todos' || serv.estado_pago === filtroPago;
-    return matchesEstado && matchesEquipo && matchesPago;
+    
+    // Filtro de Fechas Inmune a Zonas Horarias
+    if (rangoFecha === 'Todos los tiempos') {
+      return matchesEstado && matchesEquipo && matchesPago;
+    }
+
+    if (!serv.fecha_ingreso) {
+      return false;
+    }
+
+    // Parseo seguro en hora local (AAAA-MM-DD)
+    const dateStr = serv.fecha_ingreso.split('T')[0];
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const fechaServ = new Date(year, month - 1, day);
+    
+    const hoy = new Date();
+    const hoyLocal = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    let coincideFecha = true;
+
+    if (rangoFecha === 'Hoy') {
+      coincideFecha = fechaServ.getTime() === hoyLocal.getTime();
+    } else if (rangoFecha === 'Ayer') {
+      const ayerLocal = new Date(hoyLocal);
+      ayerLocal.setDate(ayerLocal.getDate() - 1);
+      coincideFecha = fechaServ.getTime() === ayerLocal.getTime();
+    } else if (rangoFecha === 'Este Mes') {
+      coincideFecha = fechaServ.getMonth() === hoy.getMonth() && fechaServ.getFullYear() === hoy.getFullYear();
+    } else if (rangoFecha === 'Personalizado') {
+      if (fechaInicio && fechaFin) {
+        const [iYear, iMonth, iDay] = fechaInicio.split('-').map(Number);
+        const inicio = new Date(iYear, iMonth - 1, iDay);
+        
+        const [fYear, fMonth, fDay] = fechaFin.split('-').map(Number);
+        const fin = new Date(fYear, fMonth - 1, fDay);
+        
+        coincideFecha = fechaServ >= inicio && fechaServ <= fin;
+      } else {
+        coincideFecha = false;
+      }
+    }
+
+    return matchesEstado && matchesEquipo && matchesPago && coincideFecha;
   });
+
+  const exportarExcel = () => {
+    exportarServiciosExcel(serviciosFiltrados, rangoFecha);
+    setMenuExportar(false);
+  };
+
+  const exportarPDF = () => {
+    exportarServiciosPDF(serviciosFiltrados, rangoFecha, filtroEstado, filtroEquipo, filtroPago);
+    setMenuExportar(false);
+  };
 
   return (
     <div className="inventario-container">
@@ -169,9 +241,24 @@ const Servicios = () => {
             <FiArrowLeft /> Volver a la lista
           </button>
         ) : (
-          <button className="btn-nuevo" onClick={() => setMostrarFormulario(true)}>
-            <FiPlus size={20} /> Nuevo Ingreso
-          </button>
+          <div style={{ display: 'flex', gap: '15px' }}>
+            {/* Dropdown de Exportación */}
+            <div className="exportar-container" ref={dropdownRef}>
+              <button className="btn-exportar" onClick={() => setMenuExportar(!menuExportar)}>
+                <FiDownload /> Exportar ▼
+              </button>
+              {menuExportar && (
+                <div className="dropdown-exportar">
+                  <button className="dropdown-item-export" onClick={exportarPDF}>📄 Descargar PDF</button>
+                  <button className="dropdown-item-export" onClick={exportarExcel}>📊 Descargar Excel</button>
+                </div>
+              )}
+            </div>
+
+            <button className="btn-nuevo" onClick={() => setMostrarFormulario(true)}>
+              <FiPlus size={20} /> Nuevo Ingreso
+            </button>
+          </div>
         )}
       </div>
 
@@ -180,6 +267,26 @@ const Servicios = () => {
         <FormularioServicio cerrarFormulario={() => setMostrarFormulario(false)} recargarTabla={cargarServicios} />
       ) : (
         <>
+          {/* Panel de Filtros de Fecha */}
+          <div className="filtros-fecha">
+            <span style={{ fontWeight: 'bold', color: '#475569', fontSize: '0.9rem' }}>Filtrar por Fecha de Ingreso:</span>
+            <select className="select-fecha" value={rangoFecha} onChange={(e) => setRangoFecha(e.target.value)}>
+              <option value="Todos los tiempos">Todos los tiempos</option>
+              <option value="Hoy">Hoy</option>
+              <option value="Ayer">Ayer</option>
+              <option value="Este Mes">Este Mes</option>
+              <option value="Personalizado">Rango Personalizado...</option>
+            </select>
+
+            {rangoFecha === 'Personalizado' && (
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <input type="date" className="input-fecha" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} />
+                <span style={{ color: '#64748B' }}>hasta</span>
+                <input type="date" className="input-fecha" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} />
+              </div>
+            )}
+          </div>
+
           {/* BARRA DE FILTROS EN GRUPO (DROPDOWNS) */}
           <div className="filtros-dropdowns-bar">
             <div className="filtro-select-group">
