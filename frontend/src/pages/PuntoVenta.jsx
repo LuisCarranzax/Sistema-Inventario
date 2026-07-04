@@ -150,11 +150,15 @@ const PuntoVenta = () => {
         <div className="productos-grid">
           {productosFiltrados.map(prod => (
             <div key={prod.id} className={`producto-card ${prod.stock <= 0 ? 'agotado' : ''}`} onClick={() => agregarAlCarrito(prod)}>
+              <div className="prod-codigo" style={{ color: '#b1b1b1ff' , fontWeight: 'bold' }}>
+                {prod.codigo_interno}
+              </div>
               <div>
                 <div className="prod-nombre">{prod.nombre}</div>
                 <div className="prod-stock">
                   <span className={`stock-dot ${prod.stock <= 0 ? 'agotado' : prod.stock <= 5 ? 'bajo' : 'disponible'}`}></span>
-                  Stock: {prod.stock}
+                  Stock: {prod.stock} 
+
                 </div>
               </div>
               <div className="prod-precio">S/ {Number(prod.precio_venta).toFixed(2)}</div>

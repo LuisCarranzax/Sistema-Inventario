@@ -1,34 +1,38 @@
-/* Contenedor principal dividido 60 / 40 */
+/* Contenedor principal dividido con carrito de ancho fijo */
 .pos-container {
   display: flex;
-  height: calc(100vh - 80px); /* Restamos el header/topbar aproximado */
+  height: calc(100vh - 140px); /* Ajustado para evitar scrollbars dobles en Layout.css */
   gap: 20px;
   overflow: hidden;
 }
 
 /* =========================================
-   PANEL IZQUIERDO: CATÁLOGO (60%)
+   PANEL IZQUIERDO: CATÁLOGO
    ========================================= */
 .pos-catalogo {
-  flex: 6;
+  flex: 1;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding-right: 10px;
+  padding-right: 5px;
 }
 
 .pos-busqueda input {
   width: 100%;
-  padding: 15px;
-  border: 1px solid #CBD5E1;
+  padding: 14px 18px;
+  border: 1px solid #E2E8F0;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   margin-bottom: 15px;
   outline: none;
+  background-color: white;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 
 .pos-busqueda input:focus {
   border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 /* Cuadrícula de Tarjetas de Productos */
@@ -78,7 +82,6 @@
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -90,7 +93,7 @@
 }
 
 .prod-stock {
-  font-size: 0.88rem; /* Aumentado de tamaño */
+  font-size: 0.88rem;
   font-weight: 600;
   color: #475569;
   margin-top: 8px;
@@ -108,43 +111,65 @@
 }
 
 .stock-dot.disponible {
-  background-color: #10B981; /* Verde */
+  background-color: #10B981;
   box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
 }
 
 .stock-dot.bajo {
-  background-color: #F59E0B; /* Ámbar */
+  background-color: #F59E0B;
   box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
 }
 
 .stock-dot.agotado {
-  background-color: #EF4444; /* Rojo */
+  background-color: #EF4444;
   box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
 }
 
 /* =========================================
-   PANEL DERECHO: TICKET / CARRITO (40%)
+   PANEL DERECHO: TICKET / CARRITO (Ancho Fijo)
    ========================================= */
 .pos-carrito {
-  flex: 2;
+  flex: 0 0 380px; /* Ancho de panel fijo perfecto, evita descuadres en HD */
   background: white;
-  border-radius: 10px;
-  box-shadow: var(--shadow-sm);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03), 0 0 0 1px rgba(0,0,0,0.05);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border: 1px solid #E2E8F0;
 }
 
 .carrito-header {
-  padding: 20px;
+  padding: 16px 20px;
   background: #F8FAFC;
   border-bottom: 1px solid #E2E8F0;
-  font-weight: bold;
-  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.carrito-header svg {
+  color: #64748B;
+  flex-shrink: 0;
+}
+
+.carrito-header input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.92rem;
+}
+
+.carrito-header input::placeholder {
+  color: #94A3B8;
+  font-weight: 500;
 }
 
 .carrito-items {
-  flex-grow: 2;
+  flex-grow: 1;
   overflow-y: auto;
   padding: 20px;
 }
@@ -160,12 +185,14 @@
 
 .cart-item-info {
   flex: 1;
+  padding-right: 10px;
 }
 
 .cart-item-controles {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .btn-cantidad {
@@ -174,12 +201,17 @@
   border: none;
   width: 28px;
   height: 28px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.btn-cantidad:hover {
+  background: #DBEAFE;
 }
 
 .btn-eliminar-item {
@@ -187,9 +219,16 @@
   color: #EF4444;
   border: none;
   padding: 6px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-eliminar-item:hover {
+  background: #FEE2E2;
 }
 
 .carrito-footer {
@@ -201,63 +240,103 @@
 .totales-fila {
   display: flex;
   justify-content: space-between;
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 20px;
+  align-items: center;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1E293B;
+  margin-bottom: 15px;
 }
 
 .pagos-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
   margin-bottom: 15px;
 }
 
 .btn-pago {
-  padding: 10px;
-  border: 1px solid #CBD5E1;
+  padding: 10px 4px;
+  border: 1px solid #E2E8F0;
   background: white;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: #475569;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.btn-pago:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #0F172A;
 }
 
 .btn-pago.activo {
   border-color: var(--accent-color);
   background: #EFF6FF;
   color: var(--accent-color);
-}
-
-.acciones-finales {
-  display: flex;
-  gap: 10px;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .btn-cobrar {
-  flex: 2;
-  background: #10B981; /* Verde éxito */
+  background: #10B981;
   color: white;
   border: none;
-  padding: 15px;
-  border-radius: 6px;
-  font-weight: bold;
-  font-size: 1.1rem;
+  padding: 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
   cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.15);
 }
 
-.btn-cobrar:hover { background: #059669; }
-.btn-cobrar:disabled { background: #9CA3AF; cursor: not-allowed; }
-
-.btn-proforma {
-  flex: 1;
-  background: #64748B;
-  color: white;
-  border: none;
-  padding: 15px;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
+.btn-cobrar:hover {
+  background: #059669;
+  box-shadow: 0 6px 12px -2px rgba(16, 185, 129, 0.25);
+  transform: translateY(-1px);
 }
 
-.btn-proforma:hover { background: #475569; }
+.btn-cobrar:active {
+  transform: translateY(0);
+}
+
+.btn-cobrar:disabled {
+  background: #E2E8F0;
+  color: #94A3B8;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* =========================================
+   DISEÑO RESPONSIVO (Móviles / Tablets)
+   ========================================= */
+@media (max-width: 968px) {
+  .pos-container {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .pos-catalogo {
+    flex: none;
+    overflow-y: visible;
+    height: auto;
+  }
+
+  .pos-carrito {
+    flex: none;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin-top: 10px;
+  }
+
+  .carrito-items {
+    max-height: 280px;
+    overflow-y: auto;
+  }
+}

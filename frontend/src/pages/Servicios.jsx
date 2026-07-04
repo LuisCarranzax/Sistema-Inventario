@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import FormularioServicio from '../components/servicios/FormularioServicio';
-import { FiPlus, FiArrowLeft, FiTrash2, FiCheckCircle, FiTool, FiAlertCircle, FiDownload } from 'react-icons/fi';
+import { 
+  FiPlus, FiArrowLeft, FiTrash2, FiCheckCircle, FiTool, FiAlertCircle, FiDownload,
+  FiActivity, FiSearch, FiCalendar, FiMonitor, FiPrinter, FiVideo, FiCreditCard, 
+  FiAlertTriangle, FiClock, FiChevronDown, FiPackage 
+} from 'react-icons/fi';
+import { FaFileExcel, FaFilePdf } from 'react-icons/fa';
 import { exportarServiciosExcel, exportarServiciosPDF } from '../services/exportServices';
 import '../css/Servicios.css';
 import '../css/Inventario.css';
@@ -23,8 +28,53 @@ const Servicios = () => {
   const [fechaFin, setFechaFin] = useState('');
   const [menuExportar, setMenuExportar] = useState(false);
 
-  // Referencia para cerrar el dropdown si hacen clic afuera
+  // Estados para selectores de filtro personalizados
+  const [openFiltroEstado, setOpenFiltroEstado] = useState(false);
+  const [openFiltroEquipo, setOpenFiltroEquipo] = useState(false);
+  const [openFiltroPago, setOpenFiltroPago] = useState(false);
+  const [openFiltroFecha, setOpenFiltroFecha] = useState(false);
+
+  // Referencias para cerrar menús al hacer clic afuera
   const dropdownRef = useRef(null);
+  const refEstado = useRef(null);
+  const refEquipo = useRef(null);
+  const refPago = useRef(null);
+  const refFecha = useRef(null);
+
+  // Opciones de Fecha
+  const opcionesFecha = [
+    { value: 'Todos los tiempos', label: 'Todos los tiempos', icon: <FiCalendar size={15} /> },
+    { value: 'Hoy', label: 'Hoy', icon: <FiCalendar size={15} /> },
+    { value: 'Ayer', label: 'Ayer', icon: <FiCalendar size={15} /> },
+    { value: 'Este Mes', label: 'Este Mes', icon: <FiCalendar size={15} /> },
+    { value: 'Personalizado', label: 'Rango Personalizado...', icon: <FiCalendar size={15} /> }
+  ];
+
+  // Opciones de Estado del Servicio con Iconos
+  const opcionesEstado = [
+    { value: 'Todos', label: 'Todos los estados', icon: <FiActivity size={15} /> },
+    { value: 'En Revisión', label: 'En Revisión', icon: <FiSearch size={15} /> },
+    { value: 'Reparados', label: 'Reparados', icon: <FiTool size={15} /> },
+    { value: 'Entregados', label: 'Entregados', icon: <FiPackage size={15} /> },
+    { value: 'Agendados', label: 'Agendados', icon: <FiCalendar size={15} /> },
+    { value: 'Instalados', label: 'Instalados', icon: <FiCheckCircle size={15} /> }
+  ];
+
+  // Opciones de Tipo de Equipo con Iconos
+  const opcionesEquipo = [
+    { value: 'Todos', label: 'Todos los equipos', icon: <FiMonitor size={15} /> },
+    { value: 'Computadora / Laptop', label: 'Computadora / Laptop', icon: <FiMonitor size={15} /> },
+    { value: 'Impresora', label: 'Impresora', icon: <FiPrinter size={15} /> },
+    { value: 'Cámaras de Seguridad', label: 'Cámaras de Seguridad', icon: <FiVideo size={15} /> }
+  ];
+
+  // Opciones de Estado de Pago con Iconos
+  const opcionesPago = [
+    { value: 'Todos', label: 'Todos los pagos', icon: <FiCreditCard size={15} /> },
+    { value: 'pendiente', label: 'Pendiente', icon: <FiAlertTriangle size={15} color="#EF4444" /> },
+    { value: 'a_cuenta', label: 'A Cuenta', icon: <FiClock size={15} color="#F59E0B" /> },
+    { value: 'cancelado', label: 'Cancelado', icon: <FiCheckCircle size={15} color="#10B981" /> }
+  ];
 
   // ESTADOS PARA LA EDICIÓN DE PAGO EN EL MODAL
   const [editPagoEstado, setEditPagoEstado] = useState('cancelado');
@@ -91,6 +141,18 @@ const Servicios = () => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setMenuExportar(false);
+      }
+      if (refEstado.current && !refEstado.current.contains(event.target)) {
+        setOpenFiltroEstado(false);
+      }
+      if (refEquipo.current && !refEquipo.current.contains(event.target)) {
+        setOpenFiltroEquipo(false);
+      }
+      if (refPago.current && !refPago.current.contains(event.target)) {
+        setOpenFiltroPago(false);
+      }
+      if (refFecha.current && !refFecha.current.contains(event.target)) {
+        setOpenFiltroFecha(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -249,8 +311,8 @@ const Servicios = () => {
               </button>
               {menuExportar && (
                 <div className="dropdown-exportar">
-                  <button className="dropdown-item-export" onClick={exportarPDF}>📄 Descargar PDF</button>
-                  <button className="dropdown-item-export" onClick={exportarExcel}>📊 Descargar Excel</button>
+                  <button className="dropdown-item-export" onClick={exportarPDF}><FaFilePdf/>Descargar PDF</button>
+                  <button className="dropdown-item-export" onClick={exportarExcel}><FaFileExcel/>Descargar Excel</button>
                 </div>
               )}
             </div>
@@ -268,15 +330,40 @@ const Servicios = () => {
       ) : (
         <>
           {/* Panel de Filtros de Fecha */}
-          <div className="filtros-fecha">
+          <div className="filtros-fecha" style={{ overflow: 'visible' }}>
             <span style={{ fontWeight: 'bold', color: '#475569', fontSize: '0.9rem' }}>Filtrar por Fecha de Ingreso:</span>
-            <select className="select-fecha" value={rangoFecha} onChange={(e) => setRangoFecha(e.target.value)}>
-              <option value="Todos los tiempos">Todos los tiempos</option>
-              <option value="Hoy">Hoy</option>
-              <option value="Ayer">Ayer</option>
-              <option value="Este Mes">Este Mes</option>
-              <option value="Personalizado">Rango Personalizado...</option>
-            </select>
+            
+            <div className="custom-select-container" ref={refFecha} style={{ maxWidth: '240px' }}>
+              <button 
+                type="button" 
+                className="custom-select-trigger" 
+                onClick={() => setOpenFiltroFecha(!openFiltroFecha)}
+              >
+                <span className="custom-select-selected-value">
+                  {opcionesFecha.find(o => o.value === rangoFecha)?.icon}
+                  <span>{opcionesFecha.find(o => o.value === rangoFecha)?.label}</span>
+                </span>
+                <FiChevronDown className={`select-arrow ${openFiltroFecha ? 'open' : ''}`} />
+              </button>
+              {openFiltroFecha && (
+                <div className="custom-select-options">
+                  {opcionesFecha.map(opt => (
+                    <button 
+                      type="button"
+                      key={opt.value} 
+                      className={`custom-select-option ${rangoFecha === opt.value ? 'selected' : ''}`}
+                      onClick={() => {
+                        setRangoFecha(opt.value);
+                        setOpenFiltroFecha(false);
+                      }}
+                    >
+                      {opt.icon}
+                      <span>{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {rangoFecha === 'Personalizado' && (
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -287,39 +374,117 @@ const Servicios = () => {
             )}
           </div>
 
-          {/* BARRA DE FILTROS EN GRUPO (DROPDOWNS) */}
+          {/* BARRA DE FILTROS EN GRUPO (DROPDOWNS PERSONALIZADOS CON ICONOS) */}
           <div className="filtros-dropdowns-bar">
-            <div className="filtro-select-group">
+            
+            {/* Filtro por Estado */}
+            <div className="filtro-select-group" ref={refEstado}>
               <label>Estado del Servicio</label>
-              <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
-                <option value="Todos">🔄 Todos los estados</option>
-                <option value="En Revisión">🔍 En Revisión</option>
-                <option value="Reparados">🔧 Reparados</option>
-                <option value="Entregados">📦 Entregados</option>
-                <option value="Agendados">📅 Agendados</option>
-                <option value="Instalados">✅ Instalados</option>
-              </select>
+              <div className="custom-select-container">
+                <button 
+                  type="button" 
+                  className="custom-select-trigger" 
+                  onClick={() => setOpenFiltroEstado(!openFiltroEstado)}
+                >
+                  <span className="custom-select-selected-value">
+                    {opcionesEstado.find(o => o.value === filtroEstado)?.icon}
+                    <span>{opcionesEstado.find(o => o.value === filtroEstado)?.label}</span>
+                  </span>
+                  <FiChevronDown className={`select-arrow ${openFiltroEstado ? 'open' : ''}`} />
+                </button>
+                {openFiltroEstado && (
+                  <div className="custom-select-options">
+                    {opcionesEstado.map(opt => (
+                      <button 
+                        type="button"
+                        key={opt.value} 
+                        className={`custom-select-option ${filtroEstado === opt.value ? 'selected' : ''}`}
+                        onClick={() => {
+                          setFiltroEstado(opt.value);
+                          setOpenFiltroEstado(false);
+                        }}
+                      >
+                        {opt.icon}
+                        <span>{opt.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="filtro-select-group">
+            {/* Filtro por Tipo de Equipo */}
+            <div className="filtro-select-group" ref={refEquipo}>
               <label>Tipo de Equipo</label>
-              <select value={filtroEquipo} onChange={(e) => setFiltroEquipo(e.target.value)}>
-                <option value="Todos">💻 Todos los equipos</option>
-                <option value="Computadora / Laptop">💻 Computadora / Laptop</option>
-                <option value="Impresora">🖨️ Impresora</option>
-                <option value="Cámaras de Seguridad">📹 Cámaras de Seguridad</option>
-              </select>
+              <div className="custom-select-container">
+                <button 
+                  type="button" 
+                  className="custom-select-trigger" 
+                  onClick={() => setOpenFiltroEquipo(!openFiltroEquipo)}
+                >
+                  <span className="custom-select-selected-value">
+                    {opcionesEquipo.find(o => o.value === filtroEquipo)?.icon}
+                    <span>{opcionesEquipo.find(o => o.value === filtroEquipo)?.label}</span>
+                  </span>
+                  <FiChevronDown className={`select-arrow ${openFiltroEquipo ? 'open' : ''}`} />
+                </button>
+                {openFiltroEquipo && (
+                  <div className="custom-select-options">
+                    {opcionesEquipo.map(opt => (
+                      <button 
+                        type="button"
+                        key={opt.value} 
+                        className={`custom-select-option ${filtroEquipo === opt.value ? 'selected' : ''}`}
+                        onClick={() => {
+                          setFiltroEquipo(opt.value);
+                          setOpenFiltroEquipo(false);
+                        }}
+                      >
+                        {opt.icon}
+                        <span>{opt.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="filtro-select-group">
+            {/* Filtro por Estado de Pago */}
+            <div className="filtro-select-group" ref={refPago}>
               <label>Estado de Pago</label>
-              <select value={filtroPago} onChange={(e) => setFiltroPago(e.target.value)}>
-                <option value="Todos">💳 Todos los pagos</option>
-                <option value="pendiente">🔴 Pendiente</option>
-                <option value="a_cuenta">🟡 A Cuenta</option>
-                <option value="cancelado">🟢 Cancelado</option>
-              </select>
+              <div className="custom-select-container">
+                <button 
+                  type="button" 
+                  className="custom-select-trigger" 
+                  onClick={() => setOpenFiltroPago(!openFiltroPago)}
+                >
+                  <span className="custom-select-selected-value">
+                    {opcionesPago.find(o => o.value === filtroPago)?.icon}
+                    <span>{opcionesPago.find(o => o.value === filtroPago)?.label}</span>
+                  </span>
+                  <FiChevronDown className={`select-arrow ${openFiltroPago ? 'open' : ''}`} />
+                </button>
+                {openFiltroPago && (
+                  <div className="custom-select-options">
+                    {opcionesPago.map(opt => (
+                      <button 
+                        type="button"
+                        key={opt.value} 
+                        className={`custom-select-option ${filtroPago === opt.value ? 'selected' : ''}`}
+                        onClick={() => {
+                          setFiltroPago(opt.value);
+                          setOpenFiltroPago(false);
+                        }}
+                      >
+                        {opt.icon}
+                        <span>{opt.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
+
           </div>
 
           <div className="hint-text">

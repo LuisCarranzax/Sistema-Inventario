@@ -360,3 +360,108 @@
   background-color: #F8FAFC;
   color: var(--accent-color);
 }
+
+/* Selectores de Filtro Personalizados con Iconos Compartidos */
+.custom-select-container {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select-trigger {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background-color: white;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #334155;
+  cursor: pointer;
+  outline: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.custom-select-trigger:hover {
+  background-color: #F8FAFC;
+  border-color: #94A3B8;
+}
+
+.custom-select-trigger:focus {
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.custom-select-selected-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.select-arrow {
+  color: #64748B;
+  transition: transform 0.2s ease;
+}
+
+.select-arrow.open {
+  transform: rotate(180deg);
+}
+
+.custom-select-options {
+  position: absolute;
+  top: 115%;
+  left: 0;
+  width: 100%;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  border: 1px solid #E2E8F0;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  z-index: 100;
+  max-height: 250px;
+  overflow-y: auto;
+  animation: slideDown 0.15s ease forwards;
+}
+
+.custom-select-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  color: #475569;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+
+.custom-select-option:hover {
+  background-color: #F8FAFC;
+  color: var(--accent-color, #2563EB);
+}
+
+.custom-select-option.selected {
+  background-color: #EFF6FF;
+  color: var(--accent-color, #2563EB);
+}
+
+/* Modal de Formulario de Producto */
+.modal-formulario-producto {
+  width: 95% !important;
+  max-width: 650px !important;
+  border-radius: 16px !important;
+  padding: 24px !important;
+  background-color: white;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  animation: scaleUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}

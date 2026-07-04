@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import FormularioProducto from '../components/inventario/FormularioProducto';
-import { FiPlus, FiEdit2, FiTrash2, FiDownload } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiDownload, FiCalendar, FiChevronDown } from 'react-icons/fi';
+import { FaFilePdf, FaFileExcel } from 'react-icons/fa';
 import { exportarInventarioExcel, exportarInventarioPDF } from '../services/exportServices';
 import '../css/Inventario.css';
 
@@ -13,16 +14,25 @@ const Inventario = () => {
   
   
   // NUEVOS ESTADOS: Filtros de Fecha y Dropdown de Exportación
-  const [rangoFecha, setRangoFecha] = useState('Este Mes');
+  const [rangoFecha, setRangoFecha] = useState('Todos los tiempos');
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
   const [menuExportar, setMenuExportar] = useState(false);
   
+  // Estados para selectores de fecha personalizados
+  const [openFiltroFecha, setOpenFiltroFecha] = useState(false);
 
-
-
-  // Referencia para cerrar el dropdown si hacen clic afuera
+  // Referencias para cerrar el dropdown si hacen clic afuera
   const dropdownRef = useRef(null);
+  const refFecha = useRef(null);
+
+  const opcionesFecha = [
+    { value: 'Todos los tiempos', label: 'Todos los tiempos', icon: <FiCalendar size={15} /> },
+    { value: 'Hoy', label: 'Hoy', icon: <FiCalendar size={15} /> },
+    { value: 'Ayer', label: 'Ayer', icon: <FiCalendar size={15} /> },
+    { value: 'Este Mes', label: 'Este Mes', icon: <FiCalendar size={15} /> },
+    { value: 'Personalizado', label: 'Rango Personalizado...', icon: <FiCalendar size={15} /> }
+  ];
 
   useEffect(() => {
     if (!mostrarFormulario) cargarInventario();
@@ -32,6 +42,9 @@ const Inventario = () => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setMenuExportar(false);
+      }
+      if (refFecha.current && !refFecha.current.contains(event.target)) {
+        setOpenFiltroFecha(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -144,42 +157,62 @@ const Inventario = () => {
           </p>
         </div>
         
-        {!mostrarFormulario && (
-          <div style={{ display: 'flex', gap: '15px' }}>
-            {/* NUEVO: Menú Dropdown de Exportación */}
-            <div className="exportar-container" ref={dropdownRef}>
-              <button className="btn-exportar" onClick={() => setMenuExportar(!menuExportar)}>
-                <FiDownload /> Exportar ▼
+        <div style={{ display: 'flex', gap: '15px' }}>
+          {/* Menú Dropdown de Exportación */}
+          <div className="exportar-container" ref={dropdownRef}>
+            <button className="btn-exportar" onClick={() => setMenuExportar(!menuExportar)}>
+              <FiDownload /> Exportar ▼
+            </button>
+            {menuExportar && (
+              <div className="dropdown-exportar">
+                <button className="dropdown-item-export" onClick={exportarPDF}><FaFilePdf/>Descargar PDF</button>
+                <button className="dropdown-item-export" onClick={exportarExcel}><FaFileExcel/>Descargar Excel</button>
+              </div>
+            )}
+          </div>
+
+          <button className="btn-nuevo" onClick={() => { setProductoAEditar(null); setMostrarFormulario(true); }}>
+            <FiPlus size={20} /> Nuevo Producto
+          </button>
+        </div>
+      </div>
+
+      <>
+          {/* NUEVO: Panel de Filtros Inteligentes (Personalizados con Emojis/Iconos) */}
+          <div className="filtros-fecha" style={{ overflow: 'visible' }}>
+            <span style={{ fontWeight: 'bold', color: '#475569', fontSize: '0.9rem' }}>Filtrar por Fecha de Ingreso:</span>
+            
+            <div className="custom-select-container" ref={refFecha} style={{ maxWidth: '240px' }}>
+              <button 
+                type="button" 
+                className="custom-select-trigger" 
+                onClick={() => setOpenFiltroFecha(!openFiltroFecha)}
+              >
+                <span className="custom-select-selected-value">
+                  {opcionesFecha.find(o => o.value === rangoFecha)?.icon}
+                  <span>{opcionesFecha.find(o => o.value === rangoFecha)?.label}</span>
+                </span>
+                <FiChevronDown className={`select-arrow ${openFiltroFecha ? 'open' : ''}`} />
               </button>
-              {menuExportar && (
-                <div className="dropdown-exportar">
-                  <button className="dropdown-item-export" onClick={exportarPDF}>📄 Descargar PDF</button>
-                  <button className="dropdown-item-export" onClick={exportarExcel}>📊 Descargar Excel</button>
+              {openFiltroFecha && (
+                <div className="custom-select-options">
+                  {opcionesFecha.map(opt => (
+                    <button 
+                      type="button"
+                      key={opt.value} 
+                      className={`custom-select-option ${rangoFecha === opt.value ? 'selected' : ''}`}
+                      onClick={() => {
+                        setRangoFecha(opt.value);
+                        setOpenFiltroFecha(false);
+                      }}
+                    >
+                      {opt.icon}
+                      <span>{opt.label}</span>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
-
-            <button className="btn-nuevo" onClick={() => { setProductoAEditar(null); setMostrarFormulario(true); }}>
-              <FiPlus size={20} /> Nuevo Producto
-            </button>
-          </div>
-        )}
-      </div>
-
-      {mostrarFormulario ? (
-        <FormularioProducto cerrarFormulario={cerrarFormulario} productoEditando={productoAEditar} />
-      ) : (
-        <>
-          {/* NUEVO: Panel de Filtros Inteligentes */}
-          <div className="filtros-fecha">
-            <span style={{ fontWeight: 'bold', color: '#475569', fontSize: '0.9rem' }}>Filtrar por Fecha de Ingreso:</span>
-            <select className="select-fecha" value={rangoFecha} onChange={(e) => setRangoFecha(e.target.value)}>
-              <option value="Todos los tiempos">Todos los tiempos</option>
-              <option value="Hoy">Hoy</option>
-              <option value="Ayer">Ayer</option>
-              <option value="Este Mes">Este Mes</option>
-              <option value="Personalizado">Rango Personalizado...</option>
-            </select>
 
             {rangoFecha === 'Personalizado' && (
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -243,7 +276,24 @@ const Inventario = () => {
             </table>
           </div>
         </>
+
+      {/* Modal de Formulario de Producto */}
+      {mostrarFormulario && (
+        <div className="modal-overlay" onClick={cerrarFormulario}>
+          <div className="modal-content modal-formulario-producto" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px', textAlign: 'left' }}>
+            <div className="modal-header-detalles" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #F1F5F9', paddingBottom: '12px' }}>
+              <h2 style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#0F172A' }}>
+                {productoAEditar ? 'Editar Producto' : 'Registrar Nuevo Producto'}
+              </h2>
+              <button className="btn-close-modal" onClick={cerrarFormulario} style={{ fontSize: '1.75rem', background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: '4px' }}>&times;</button>
+            </div>
+            <div style={{ maxHeight: '72vh', overflowY: 'auto', paddingRight: '5px' }}>
+              <FormularioProducto cerrarFormulario={cerrarFormulario} productoAEditar={productoAEditar} />
+            </div>
+          </div>
+        </div>
       )}
+
     </div>
   );
 };
