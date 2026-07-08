@@ -23,7 +23,7 @@ const Servicios = () => {
   const [servicioDetalle, setServicioDetalle] = useState(null);
 
   // NUEVOS ESTADOS: Filtros de Fecha y Dropdown de Exportación
-  const [rangoFecha, setRangoFecha] = useState('Este Mes');
+  const [rangoFecha, setRangoFecha] = useState('Todos los tiempos');
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
   const [menuExportar, setMenuExportar] = useState(false);
@@ -755,15 +755,15 @@ const Servicios = () => {
                       >
                         {servicioDetalle.equipo_dispositivo && servicioDetalle.equipo_dispositivo.startsWith('Cámaras de Seguridad') ? (
                           <>
-                            <option value="agendado">📅 Agendado</option>
-                            <option value="instalado">✅ Instalado</option>
-                            <option value="entregado">📦 Entregado</option>
+                            <option value="agendado">Agendado</option>
+                            <option value="instalado">Instalado</option>
+                            <option value="entregado">Entregado</option>
                           </>
                         ) : (
                           <>
-                            <option value="en_revision">🔍 En Revisión</option>
-                            <option value="reparado">🔧 Reparado</option>
-                            <option value="entregado">📦 Entregado</option>
+                            <option value="en_revision">En Revisión</option>
+                            <option value="reparado">Reparado</option>
+                            <option value="entregado">Entregado</option>
                           </>
                         )}
                       </select>

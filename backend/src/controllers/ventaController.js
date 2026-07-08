@@ -104,3 +104,52 @@ exports.obtenerVentas = async (req, res) => {
         res.status(500).json({ message: "Error en el servidor", error: error.message });
     }
 };
+
+exports.obtenerHistorialVentas = async (req, res) => {
+    try {
+        // Traemos las ventas ordenadas por fecha incluyendo cliente_nombre
+        const query = `
+            SELECT id, cliente_nombre, medio_pago, es_proforma, total, fecha_venta 
+            FROM ventas 
+            ORDER BY fecha_venta DESC
+        `;
+        const [ventas] = await db.query(query);
+        res.json(ventas);
+    } catch (error) {
+        console.error("Error al obtener historial de ventas:", error);
+        res.status(500).json({ message: "Error interno del servidor" });
+    }
+};
+
+exports.obtenerDetalleVenta = async (req, res) => {
+    const { id } = req.params;
+    try {
+        // 1. Obtener los datos de la venta general
+        const [ventas] = await db.query(
+            `SELECT id, cliente_nombre, medio_pago, es_proforma, total, fecha_venta 
+             FROM ventas WHERE id = ?`, [id]
+        );
+        
+        if (ventas.length === 0) {
+            return res.status(404).json({ message: "Venta no encontrada" });
+        }
+        
+        const venta = ventas[0];
+
+        // 2. Obtener los detalles de los productos vendidos
+        const [detalles] = await db.query(
+            `SELECT dv.cantidad, dv.precio_unitario, dv.subtotal, p.nombre, p.codigo_interno
+             FROM detalle_ventas dv
+             JOIN productos p ON dv.producto_id = p.id
+             WHERE dv.venta_id = ?`, [id]
+        );
+
+        res.json({
+            ...venta,
+            productos: detalles
+        });
+    } catch (error) {
+        console.error("Error al obtener detalle de venta:", error);
+        res.status(500).json({ message: "Error interno del servidor" });
+    }
+};

@@ -45,18 +45,18 @@ export const generarDocumentoPDF = (ticketId, carrito, total, esProforma, client
     head: [tableColumn],
     body: tableRows,
     theme: 'striped',
-    headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255] },
+    headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], halign: 'center' },
     styles: { fontSize: 10 },
-    columnStyles: { 0: { halign: 'center' }, 2: { halign: 'right' }, 3: { halign: 'right' } }
+    columnStyles: { 0: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' } }
   });
 
   // 4. Total a Pagar
   const finalY = doc.lastAutoTable.finalY || 85;
   doc.setFontSize(14);
   doc.setTextColor(5, 150, 105); // Verde dinero
-  doc.text(`TOTAL: S/ ${total.toFixed(2)}`, 195, finalY + 15, { align: "right" });
+  doc.text(`TOTAL: S/ ${Number(total).toFixed(2)}`, 195, finalY + 15, { align: "right" });
 
   // 5. Descargar el archivo
-  const nombreArchivo = esProforma ? `Proforma_${ticketId}.pdf` : `Venta_${ticketId}.pdf`;
+  const nombreArchivo = esProforma ? `Proforma_#${ticketId}_${new Date().toLocaleDateString('es-PE')}.pdf` : `Venta_#${ticketId}_${new Date().toLocaleDateString('es-PE')}.pdf`;
   doc.save(nombreArchivo);
 };

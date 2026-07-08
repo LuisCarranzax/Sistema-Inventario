@@ -1,8 +1,15 @@
 const db = require('../config/db');
 
 exports.obtenerMetricasMensuales = async (req, res) => {
+// Si el frontend manda mes y año, los usamos. Si no, usamos el actual por defecto.
+    const mesActual = new Date().getMonth() + 1;
+    const anioActual = new Date().getFullYear();
+    
+    const mes = req.query.mes ? Number(req.query.mes) : mesActual;
+    const anio = req.query.anio ? Number(req.query.anio) : anioActual;
+
     try {
-        // 1. Ganancias y Costos por Venta de Productos en el mes actual
+        // En TODAS tus consultas, cambia "MONTH(CURRENT_DATE())" por el parámetro ?
         const queryProductos = `
             SELECT 
                 IFNULL(SUM(dv.cantidad * dv.precio_unitario), 0) AS ingresos_productos,
@@ -12,22 +19,21 @@ exports.obtenerMetricasMensuales = async (req, res) => {
             JOIN productos p ON dv.producto_id = p.id
             JOIN ventas v ON dv.venta_id = v.id
             WHERE v.es_proforma = FALSE 
-              AND MONTH(v.fecha_venta) = MONTH(CURRENT_DATE())
-              AND YEAR(v.fecha_venta) = YEAR(CURRENT_DATE())
+              AND MONTH(v.fecha_venta) = ? 
+              AND YEAR(v.fecha_venta) = ?
         `;
 
-        // 2. Ingresos por Servicios Técnicos del mes actual 
         const queryServicios = `
-            SELECT 
-                IFNULL(SUM(precio), 0) AS ingresos_servicios
+            SELECT IFNULL(SUM(precio), 0) AS ingresos_servicios
             FROM servicios_tecnicos
-            WHERE estado_pago IN ('cancelado', 'a_cuenta') -- Solo contamos dinero real ingresado
-              AND MONTH(fecha_ingreso) = MONTH(CURRENT_DATE())
-              AND YEAR(fecha_ingreso) = YEAR(CURRENT_DATE())
+            WHERE estado_pago IN ('cancelado', 'a_cuenta')
+              AND MONTH(fecha_ingreso) = ? 
+              AND YEAR(fecha_ingreso) = ?
         `;
 
-        const [[resProductos]] = await db.query(queryProductos);
-        const [[resServicios]] = await db.query(queryServicios);
+        // Ejecutamos pasando las variables mes y año
+        const [[resProductos]] = await db.query(queryProductos, [mes, anio]);
+        const [[resServicios]] = await db.query(queryServicios, [mes, anio]);
 
         const totalIngresos = Number(resProductos.ingresos_productos) + Number(resServicios.ingresos_servicios);
         const gananciaTotalNeta = Number(resProductos.ganancia_neta_productos) + Number(resServicios.ingresos_servicios);

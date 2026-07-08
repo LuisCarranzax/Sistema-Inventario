@@ -17,6 +17,7 @@ const PuntoVenta = () => {
   
   // NUEVO: Estado para el checkbox de Proforma
   const [esProforma, setEsProforma] = useState(false);
+  const [descargarPDF, setDescargarPDF] = useState(false);
 
   const categorias = ['Todos', ...new Set(productos.map(p => p.categoria_nombre))];
 
@@ -89,12 +90,14 @@ const PuntoVenta = () => {
       // 1. Guardamos en MySQL
       const response = await api.post('/ventas/registrar', payload);
       
-      // 2. Mostramos aviso al usuario
+      // 2. Mostramos aviso al usuario y descargamos PDF si fue solicitado
       const tipo = esProforma ? 'Proforma generada' : 'Venta registrada';
-      alert(`✅ ${tipo} exitosamente.\nSe descargará el documento PDF a continuación.`);
-      
-      // 3. Generamos y descargamos el PDF usando nuestro Servicio Externo
-      generarDocumentoPDF(response.data.ventaId, carrito, totalVenta, esProforma, clienteNombre, metodoPago);
+      if (descargarPDF) {
+        alert(`✅ ${tipo} exitosamente.\nSe descargará el documento PDF a continuación.`);
+        generarDocumentoPDF(response.data.ventaId, carrito, totalVenta, esProforma, clienteNombre, metodoPago);
+      } else {
+        alert(`✅ ${tipo} exitosamente.`);
+      }
       
       // NUEVO: Notificación inmediata de stock agotado
       if (!esProforma) {
@@ -110,7 +113,8 @@ const PuntoVenta = () => {
       setCarrito([]);
       setBusqueda('');
       setClienteNombre('');
-      setEsProforma(false); 
+      setEsProforma(false);
+      setDescargarPDF(false); 
       
       // 5. Recargamos catálogo
       cargarProductos();
@@ -236,13 +240,25 @@ const PuntoVenta = () => {
               Generar solo como Proforma (No descuenta stock)
             </label>
 
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#475569', fontWeight: '500' }}>
+              <input 
+                type="checkbox" 
+                checked={descargarPDF} 
+                onChange={(e) => setDescargarPDF(e.target.checked)} 
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              📄 Descargar comprobante en PDF automáticamente
+            </label>
+
             <button 
               className="btn-cobrar" 
               onClick={procesarVenta} 
               disabled={carrito.length === 0}
               style={{ width: '100%', backgroundColor: esProforma ? '#3B82F6' : '#10B981' }}
             >
-              {esProforma ? 'Generar Proforma y Descargar PDF' : 'Procesar Venta y Descargar PDF'}
+              {esProforma 
+                ? (descargarPDF ? 'Generar Proforma y Descargar PDF' : 'Generar Proforma (Sin descargar)') 
+                : (descargarPDF ? 'Procesar Venta y Descargar PDF' : 'Procesar Venta (Sin descargar)')}
             </button>
             
           </div>

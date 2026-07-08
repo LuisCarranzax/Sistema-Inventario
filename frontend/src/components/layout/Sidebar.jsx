@@ -8,6 +8,7 @@ import { FiMenu,
   FiLogOut, 
   FiTool, 
   FiUser,
+  FiFileText,
   FiPenTool} 
 from 'react-icons/fi';
 import { AuthContext } from '../../context/AuthContext';
@@ -27,6 +28,7 @@ const Sidebar = () => {
       { to: "/inventario", label: "Inventario", icon: FiBox },
       { to: "/servicios", label: "Servicio Técnico", icon: FiTool },
       { to: "/punto-venta", label: "Punto de Venta", icon: FiShoppingCart },
+      { to: "/historial-ventas", label: "Historial de Ventas", icon: FiFileText },
       { to: "/analiticas", label: "Analíticas", icon: FiTrendingUp }
     ],
     administrador: [
