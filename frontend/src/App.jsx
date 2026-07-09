@@ -13,6 +13,7 @@ import Analiticas from './pages/Analiticas';
 import PerfilTrabajador from './pages/PerfilTrabajador';
 import PanelAdmin from './pages/AdminPanel';
 import HistorialVentas from './pages/HistorialVentas';
+import Cotizaciones from './pages/Cotizaciones';
 
 // IMPORTACIÓN DEL LAYOUT (La pieza que faltaba)
 import Layout from './components/layout/Layout';
@@ -48,6 +49,7 @@ function App() {
             <Route path="admin" element={<PanelAdmin />} />
             <Route path="perfil" element={<PerfilTrabajador />} />
             <Route path="historial-ventas" element={<HistorialVentas />} />
+            <Route path="cotizaciones" element={<Cotizaciones />} />
           </Route>
 
           {/* Ruta por defecto (opcional): Si el usuario escribe una URL que no existe */}

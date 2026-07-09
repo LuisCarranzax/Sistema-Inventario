@@ -15,6 +15,8 @@ const usuarioRoutes = require('./routes/usuarioRoutes');
 const categoriaRoutes = require('./routes/categoriaRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const cotizacionRoutes = require('./routes/cotizacionRoutes');
+
 
 // Middlewares
 app.use(cors());
@@ -46,6 +48,7 @@ app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/categorias', categoriaRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ia', aiRoutes);
+app.use('/api/cotizaciones', cotizacionRoutes);
 
 // Ruta de comprobación de salud del servidor (Health check)
 app.get('/', (req, res) => {

@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import api from '../services/api';
 import { generarReporteMensualPDF, generarReportePersonalizadoPDF } from '../../../backend/src/services/reporteServices';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { FiDownload, FiTrendingUp, FiDollarSign, FiShoppingBag, FiTool, FiCalendar, FiChevronDown } from 'react-icons/fi';
+import { FiDownload, FiTrendingUp, FiDollarSign, FiShoppingBag, FiTool } from 'react-icons/fi';
 import '../css/Analiticas.css';
 import { useToast } from '../context/ToastContext';
 import { AuthContext } from '../context/AuthContext';
 
 
+
+
 const Analiticas = () => {
   const { showToast } = useToast();
   const { user } = useContext(AuthContext);
-
-  const anioActual = new Date().getFullYear();
 
   // Estados para almacenar las métricas y los históricos del mes
   const [metricas, setMetricas] = useState(null);
@@ -20,7 +20,8 @@ const Analiticas = () => {
   const [ventasMes, setVentasMes] = useState([]);
   const [serviciosMes, setServiciosMes] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+  const anioActual = new Date().getFullYear();
+
 
   // Estados para reporte personalizado
   const [mostrarModalPersonalizado, setMostrarModalPersonalizado] = useState(false);
@@ -32,37 +33,9 @@ const Analiticas = () => {
   });
   const [categorias, setCategorias] = useState([]);
   const [mesSeleccionado, setMesSeleccionado] = useState(new Date().getMonth() + 1);
-  const [openFiltroMes, setOpenFiltroMes] = useState(false);
-  const refMes = useRef(null);
-
-  const opcionesMeses = [
-    { value: 1, label: 'Enero' },
-    { value: 2, label: 'Febrero' },
-    { value: 3, label: 'Marzo' },
-    { value: 4, label: 'Abril' },
-    { value: 5, label: 'Mayo' },
-    { value: 6, label: 'Junio' },
-    { value: 7, label: 'Julio' },
-    { value: 8, label: 'Agosto' },
-    { value: 9, label: 'Septiembre' },
-    { value: 10, label: 'Octubre' },
-    { value: 11, label: 'Noviembre' },
-    { value: 12, label: 'Diciembre' }
-  ];
-
   useEffect(() => {
     cargarDatosAnaliticos();
   }, [mesSeleccionado]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (refMes.current && !refMes.current.contains(event.target)) {
-        setOpenFiltroMes(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const cargarDatosAnaliticos = async () => {
     try {
@@ -157,70 +130,47 @@ const Analiticas = () => {
   return (
     <div className="analiticas-container">
       
-      {/* CABECERA CON CONTROLES UNIFICADOS */}
-      <div className="inventario-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-        <div>
-          <h1>Métricas Financieras y Rendimiento</h1>
-          <p style={{ color: '#64748B', fontSize: '0.9rem', marginTop: '5px' }}>
-            Análisis de ingresos comerciales, costos, ganancias netas y volumen operativo.
-          </p>
+      {/* CABECERA CON BOTONES DE EXPORTACIÓN */}
+      <div className="inventario-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Métricas Financieras y Rendimiento</h1>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn-filtro" onClick={() => setMostrarModalPersonalizado(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, padding: '10px 20px', fontSize: '0.9rem', backgroundColor: '#8B5CF6', color: '#FFF' }}>
+            <FiDownload /> Reporte Personalizado (PDF)
+          </button>
+          <button className="btn-nuevo" onClick={handleDescargarReporte} style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, padding: '10px 20px', fontSize: '0.9rem', backgroundColor: '#2563EB' }}>
+            <FiDownload /> Exportar Cierre de Mes (PDF)
+          </button>
         </div>
+        <div className="inventario-header">
+        <h1>Métricas Financieras</h1>
         
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-          
-          {/* Selector de Mes Customizado */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontWeight: 'bold', color: '#475569', fontSize: '0.9rem' }}>Mes:</span>
-            <div className="custom-select-container" ref={refMes} style={{ width: '160px' }}>
-              <button 
-                type="button" 
-                className="custom-select-trigger" 
-                onClick={() => setOpenFiltroMes(!openFiltroMes)}
-              >
-                <span className="custom-select-selected-value">
-                  <FiCalendar size={15} />
-                  <span>{opcionesMeses.find(o => o.value === mesSeleccionado)?.label}</span>
-                </span>
-                <FiChevronDown className={`select-arrow ${openFiltroMes ? 'open' : ''}`} />
-              </button>
-              {openFiltroMes && (
-                <div className="custom-select-options" style={{ maxHeight: '250px', overflowY: 'auto' }}>
-                  {opcionesMeses.map(opt => (
-                    <button 
-                      type="button"
-                      key={opt.value} 
-                      className={`custom-select-option ${mesSeleccionado === opt.value ? 'selected' : ''}`}
-                      onClick={() => {
-                        setMesSeleccionado(opt.value);
-                        setOpenFiltroMes(false);
-                      }}
-                    >
-                      <span>{opt.label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Botones de Reporte */}
-          <button 
-            className="btn-filtro" 
-            onClick={() => setMostrarModalPersonalizado(true)} 
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, padding: '10px 16px', fontSize: '0.88rem', backgroundColor: '#8B5CF6', color: '#FFF' }}
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+          {/* SELECTOR DE MES */}
+          <select 
+             className="select-fecha" 
+             value={mesSeleccionado} 
+             onChange={(e) => setMesSeleccionado(Number(e.target.value))}
+             style={{ fontWeight: 'bold' }}
           >
-            <FiDownload /> Reporte Personalizado
-          </button>
-          
-          <button 
-            className="btn-nuevo" 
-            onClick={handleDescargarReporte} 
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, padding: '10px 16px', fontSize: '0.88rem', backgroundColor: '#2563EB' }}
-          >
-            <FiDownload /> Exportar Cierre de Mes
-          </button>
+            <option value={1}>Enero</option>
+            <option value={2}>Febrero</option>
+            <option value={3}>Marzo</option>
+            <option value={4}>Abril</option>
+            <option value={5}>Mayo</option>
+            <option value={6}>Junio</option>
+            <option value={7}>Julio</option>
+            <option value={8}>Agosto</option>
+            <option value={9}>Septiembre</option>
+            <option value={10}>Octubre</option>
+            <option value={11}>Noviembre</option>
+            <option value={12}>Diciembre</option>
+          </select>
 
+          <button className="btn-nuevo" onClick={handleDescargarReporte} style={{ backgroundColor: '#2563EB' }}>
+            📥 Exportar Cierre
+          </button>
         </div>
+      </div>
       </div>
 
       {/* CUADRÍCULA DE SECCIONES EN TARJETAS (KPIs) */}

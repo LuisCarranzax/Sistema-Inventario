@@ -1,4 +1,7 @@
 .inventario-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
   animation: fadeIn 0.4s ease-in-out;
 }
 
@@ -39,6 +42,12 @@
   margin-bottom: 20px;
   overflow-x: auto;
   padding-bottom: 5px;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.filtros-container::-webkit-scrollbar {
+  display: none; /* Oculta la barra de scroll para una vista limpia en móviles */
 }
 
 .btn-filtro {
@@ -69,7 +78,8 @@
   background: white;
   border-radius: 10px;
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  overflow-x: auto; /* Permite desplazamiento horizontal local en móviles */
+  -webkit-overflow-scrolling: touch;
 }
 
 .tabla-inventario {
@@ -253,6 +263,7 @@
 /* Filtros de Fecha Inteligentes */
 .filtros-fecha {
   display: flex;
+  flex-wrap: wrap; /* Envoltura automática para evitar desbordes */
   gap: 15px;
   align-items: center;
   margin-bottom: 20px;
@@ -476,4 +487,69 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
   animation: scaleUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Modal de Reabastecimiento */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(3px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  width: 400px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  animation: scaleUp 0.2s ease-out;
+}
+
+.btn-accion.btn-reabastecer {
+  color: #10B981; /* Verde éxito */
+  background: #ECFDF5;
+}
+.btn-accion.btn-reabastecer:hover {
+  background: #D1FAE5;
+}
+
+/* Responsividad en Interfaces y Encabezados */
+@media (max-width: 768px) {
+  .inventario-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .inventario-header .exportar-container,
+  .inventario-header .btn-nuevo,
+  .inventario-header div[style*="display: flex"] {
+    width: 100%;
+  }
+
+  .btn-nuevo {
+    justify-content: center;
+  }
+}
+
+/* Optimización de Modales en Móviles Cortos */
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: 20px;
+    align-items: flex-start;
+    overflow-y: auto;
+  }
+
+  .modal-content {
+    padding: 20px;
+    margin: auto;
+  }
 }

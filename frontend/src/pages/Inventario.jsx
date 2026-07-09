@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import FormularioProducto from '../components/inventario/FormularioProducto';
-import { FiPlus, FiEdit2, FiTrash2, FiDownload, FiCalendar, FiChevronDown } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiDownload, FiCalendar, FiChevronDown, FiPackage } from 'react-icons/fi';
 import { FaFilePdf, FaFileExcel } from 'react-icons/fa';
 import { exportarInventarioExcel, exportarInventarioPDF } from '../services/exportServices';
 import '../css/Inventario.css';
@@ -11,7 +11,8 @@ const Inventario = () => {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [productoAEditar, setProductoAEditar] = useState(null);
   const [filtroCategoria, setFiltroCategoria] = useState('Todos');
-  
+  const [modalReabastecer, setModalReabastecer] = useState({ visible: false, producto: null, cantidad: 1, precio_compra: 0 });
+  const [historialIngresos, setHistorialIngresos] = useState([]);
   
   // NUEVOS ESTADOS: Filtros de Fecha y Dropdown de Exportación
   const [rangoFecha, setRangoFecha] = useState('Todos los tiempos');
@@ -51,12 +52,33 @@ const Inventario = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // En tu función cargarInventario(), haz que también cargue el historial:
   const cargarInventario = async () => {
     try {
-      const response = await api.get('/productos');
-      setProductos(response.data);
+      const [resProductos, resHistorial] = await Promise.all([
+        api.get('/productos'),
+        api.get('/productos/movimientos/ingresos')
+      ]);
+      setProductos(resProductos.data);
+      setHistorialIngresos(resHistorial.data);
     } catch (error) {
-      console.error("Error al cargar el inventario", error);
+      console.error("Error al cargar inventario", error);
+    }
+  };
+
+  // Función para guardar el reabastecimiento
+  const guardarReabastecimiento = async (e) => {
+    e.preventDefault();
+    try {
+      await api.put(`/productos/${modalReabastecer.producto.id}/reabastecer`, {
+        cantidad: Number(modalReabastecer.cantidad),
+        precio_compra: Number(modalReabastecer.precio_compra)
+      });
+      alert("✅ Lote reabastecido e ingresado al historial.");
+      setModalReabastecer({ visible: false, producto: null, cantidad: 1, precio_compra: 0 });
+      cargarInventario(); // Recarga la tabla y el historial
+    } catch (error) {
+      alert("❌ Error al reabastecer.");
     }
   };
 
@@ -142,7 +164,7 @@ const Inventario = () => {
   };
 
   const exportarPDF = () => {
-    exportarInventarioPDF(productosFiltrados, rangoFecha, filtroCategoria);
+    exportarInventarioPDF(productosFiltrados, rangoFecha, historialIngresos, filtroCategoria);
     setMenuExportar(false);
   };
 
@@ -262,9 +284,14 @@ const Inventario = () => {
                         <button className="btn-accion btn-editar" title="Editar" onClick={() => abrirEdicion(prod)}>
                           <FiEdit2 size={16} />
                         </button>
+                        <button className="btn-accion btn-reabastecer" title="Reabastecer Lote" 
+                        onClick={() => setModalReabastecer({ visible: true, producto: prod, cantidad: 1, precio_compra: prod.precio_compra })}>
+                        <FiPackage size={16} />
+                        </button>
                         <button className="btn-accion btn-eliminar" title="Eliminar" onClick={() => handleEliminar(prod.id, prod.nombre)}>
                           <FiTrash2 size={16} />
                         </button>
+                        
                       </div>
                     </td>
                   </tr>
@@ -293,7 +320,37 @@ const Inventario = () => {
           </div>
         </div>
       )}
-
+      {/* MODAL EMERGENTE DE REABASTECIMIENTO */}
+      {modalReabastecer.visible && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3 style={{ marginTop: 0, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FiPackage color="#10B981" /> Reabastecer Lote
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: '#64748B', marginBottom: '20px' }}>
+              Añadiendo stock para: <strong>{modalReabastecer.producto.nombre}</strong>
+            </p>
+            
+            <form onSubmit={guardarReabastecimiento}>
+              <div className="input-group-auth" style={{ marginBottom: '15px' }}>
+                <label>Cantidad que ingresa</label>
+                <input type="number" min="1" required value={modalReabastecer.cantidad} 
+                  onChange={e => setModalReabastecer({...modalReabastecer, cantidad: e.target.value})} />
+              </div>
+              <div className="input-group-auth" style={{ marginBottom: '20px' }}>
+                <label>Precio de Compra Actual (S/)</label>
+                <input type="number" step="0.01" required value={modalReabastecer.precio_compra} 
+                  onChange={e => setModalReabastecer({...modalReabastecer, precio_compra: e.target.value})} />
+              </div>
+              
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn-filtro" onClick={() => setModalReabastecer({visible: false})}>Cancelar</button>
+                <button type="submit" className="btn-seguridad" style={{ background: '#10B981' }}>Confirmar Ingreso</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

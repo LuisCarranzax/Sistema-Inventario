@@ -102,3 +102,32 @@
   padding: 30px;
   background-color: var(--bg-main);
 }
+
+.sidebar-section {
+  padding: 15px 20px 5px;
+  font-size: 0.8rem;
+  color: #94A3B8;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar-section .sidebar-icon {
+  margin-right: 8px;
+  vertical-align: middle;
+  opacity: 0.8;
+}
+
+/* Si tu sidebar está colapsada, oculta el texto pero deja el icono */
+.sidebar.collapsed .sidebar-subtitle, 
+.sidebar.collapsed .sidebar-icon {
+  display: none; /* Ajusta según el selector que uses para ocultar texto */
+}
+
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 15px; /* Menos padding en móviles para dar más espacio al contenido */
+  }
+}

@@ -197,38 +197,60 @@ exports.actualizarProducto = async (req, res) => {
     }
 };
 
+// 1. Función para inyectar stock (Transacción SQL)
 exports.reabastecerProducto = async (req, res) => {
     const { id } = req.params;
-    const { cantidad } = req.body;
-
-    if (!cantidad || Number(cantidad) <= 0) {
-        return res.status(400).json({ message: "Cantidad inválida para reabastecer." });
-    }
-
+    const { cantidad, precio_compra } = req.body;
+    
     const connection = await db.getConnection();
+
     try {
         await connection.beginTransaction();
 
-        // 1. Aumentamos el stock
-        await connection.query(
-            'UPDATE productos SET stock = stock + ? WHERE id = ?',
-            [Number(cantidad), id]
-        );
+        // A. Sumar al stock y actualizar el precio de compra (si el proveedor lo subió)
+        let updateQuery = 'UPDATE productos SET stock = stock + ?';
+        let queryParams = [cantidad];
+        
+        if (precio_compra) {
+            updateQuery += ', precio_compra = ?';
+            queryParams.push(precio_compra);
+        }
+        updateQuery += ' WHERE id = ?';
+        queryParams.push(id);
+        
+        await connection.query(updateQuery, queryParams);
 
-        // 2. Registramos el movimiento en la bitácora
+        // B. Guardar el registro inmutable en el Kardex
         await connection.query(
-            `INSERT INTO movimientos_inventario (producto_id, tipo_movimiento, cantidad) 
-             VALUES (?, 'ingreso', ?)`,
-            [id, Number(cantidad)]
+            'INSERT INTO movimientos_inventario (producto_id, tipo_movimiento, cantidad) VALUES (?, "ingreso", ?)',
+            [id, cantidad]
         );
 
         await connection.commit();
-        res.json({ message: "Stock reabastecido correctamente." });
+        res.json({ message: 'Stock reabastecido y registrado en el historial correctamente.' });
+
     } catch (error) {
         await connection.rollback();
-        console.error("Error al reabastecer producto:", error);
-        res.status(500).json({ message: "Error al reabastecer el producto", error: error.message });
+        console.error("Error al reabastecer:", error);
+        res.status(500).json({ message: 'Error al reabastecer el producto' });
     } finally {
         connection.release();
+    }
+};
+
+// 2. Función para obtener el historial de ingresos (Para el PDF)
+exports.obtenerHistorialAbastecimientos = async (req, res) => {
+    try {
+        const query = `
+            SELECT m.id, m.cantidad, m.fecha_movimiento, p.codigo_interno, p.nombre, p.precio_compra
+            FROM movimientos_inventario m
+            JOIN productos p ON m.producto_id = p.id
+            WHERE m.tipo_movimiento = 'ingreso'
+            ORDER BY m.fecha_movimiento DESC
+        `;
+        const [historial] = await db.query(query);
+        res.json(historial);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al cargar el historial' });
     }
 };

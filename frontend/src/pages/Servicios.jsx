@@ -33,6 +33,7 @@ const Servicios = () => {
   const [openFiltroEquipo, setOpenFiltroEquipo] = useState(false);
   const [openFiltroPago, setOpenFiltroPago] = useState(false);
   const [openFiltroFecha, setOpenFiltroFecha] = useState(false);
+  const [openEditEstado, setOpenEditEstado] = useState(false);
 
   // Referencias para cerrar menús al hacer clic afuera
   const dropdownRef = useRef(null);
@@ -40,6 +41,7 @@ const Servicios = () => {
   const refEquipo = useRef(null);
   const refPago = useRef(null);
   const refFecha = useRef(null);
+  const refEditEstado = useRef(null);
 
   // Opciones de Fecha
   const opcionesFecha = [
@@ -58,6 +60,14 @@ const Servicios = () => {
     { value: 'Entregados', label: 'Entregados', icon: <FiPackage size={15} /> },
     { value: 'Agendados', label: 'Agendados', icon: <FiCalendar size={15} /> },
     { value: 'Instalados', label: 'Instalados', icon: <FiCheckCircle size={15} /> }
+  ];
+
+  const opcionesEditEstado = [
+    { value: 'en_revision', label: 'En Revisión', icon: <FiSearch size={15} /> },
+    { value: 'reparado', label: 'Reparado', icon: <FiTool size={15} /> },
+    { value: 'entregado', label: 'Entregado', icon: <FiPackage size={15} /> },
+    { value: 'agendado', label: 'Agendado', icon: <FiCalendar size={15} /> },
+    { value: 'instalado', label: 'Instalado', icon: <FiCheckCircle size={15} /> }
   ];
 
   // Opciones de Tipo de Equipo con Iconos
@@ -144,6 +154,9 @@ const Servicios = () => {
       }
       if (refEstado.current && !refEstado.current.contains(event.target)) {
         setOpenFiltroEstado(false);
+      }
+      if (refEditEstado.current && !refEditEstado.current.contains(event.target)) {
+        setOpenEditEstado(false);
       }
       if (refEquipo.current && !refEquipo.current.contains(event.target)) {
         setOpenFiltroEquipo(false);
@@ -747,26 +760,39 @@ const Servicios = () => {
                 <div className="estado-update-box">
                   <h3>Actualizar Estado del Servicio</h3>
                   <div className="pago-update-form">
-                    <div className="input-group-pago">
+                    <div className="input-group-pago" ref={refEditEstado}>
                       <label>Estado Técnico</label>
-                      <select 
-                        value={editEstado} 
-                        onChange={(e) => setEditEstado(e.target.value)}
-                      >
-                        {servicioDetalle.equipo_dispositivo && servicioDetalle.equipo_dispositivo.startsWith('Cámaras de Seguridad') ? (
-                          <>
-                            <option value="agendado">Agendado</option>
-                            <option value="instalado">Instalado</option>
-                            <option value="entregado">Entregado</option>
-                          </>
-                        ) : (
-                          <>
-                            <option value="en_revision">En Revisión</option>
-                            <option value="reparado">Reparado</option>
-                            <option value="entregado">Entregado</option>
-                          </>
+                        <div className="custom-select-container">
+                        <button 
+                          type="button" 
+                          className="custom-select-trigger" 
+                          onClick={() => setOpenEditEstado(!openEditEstado)}
+                        >
+                          <span className="custom-select-selected-value">
+                            {opcionesEditEstado.find(o => o.value === editEstado)?.icon}
+                            <span>{opcionesEditEstado.find(o => o.value === editEstado)?.label}</span>
+                          </span>
+                          <FiChevronDown className={`select-arrow ${openEditEstado ? 'open' : ''}`} />
+                        </button>
+                        {openEditEstado && (
+                          <div className="custom-select-options" style={{ top: 'auto', bottom: '100%', marginBottom: '8px'}}>
+                            {opcionesEditEstado.map(opt => (
+                              <button 
+                                type="button"
+                                key={opt.value} 
+                                className={`custom-select-option ${editEstado === opt.value ? 'selected' : ''}`}
+                                onClick={() => {
+                                  setEditEstado(opt.value);
+                                  setOpenEditEstado(false);
+                                }}
+                              >
+                                {opt.icon}
+                                <span>{opt.label}</span>
+                              </button>
+                            ))}
+                          </div>
                         )}
-                      </select>
+                      </div>  
                     </div>
 
                     <button className="btn-actualizar-estado" onClick={handleActualizarEstado}>

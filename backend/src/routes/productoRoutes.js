@@ -9,6 +9,6 @@ router.get('/', productoController.obtenerProductos);
 router.delete('/:id', productoController.eliminarProducto);
 router.put('/:id', productoController.actualizarProducto);
 router.put('/:id/reabastecer', productoController.reabastecerProducto);
-
+router.get('/movimientos/ingresos', productoController.obtenerHistorialAbastecimientos);
 module.exports = router;
 

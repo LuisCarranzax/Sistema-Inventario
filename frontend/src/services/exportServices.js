@@ -38,60 +38,92 @@ export const exportarInventarioExcel = (productosFiltrados, rangoFecha) => {
   XLSX.writeFile(workbook, `Reporte_Inventario_${rangoFecha.replace(/\s+/g, '_')}.xlsx`);
 };
 
-export const exportarInventarioPDF = (productosFiltrados, rangoFecha, filtroCategoria) => {
-  const doc = new jsPDF();
-  const fechaHoy = new Date().toLocaleDateString('es-PE');
+export const exportarInventarioPDF = (productosFiltrados, rangoFecha, historialIngresos, filtroCategoria = 'Todos') => {
+    const doc = new jsPDF();
+    const fechaHoy = new Date().toLocaleDateString('es-PE');
+    
+    // ENCABEZADO CORPORATIVO EN PDF (Azul corporativo para Inventario)
+    const colorTema = [37, 99, 235];
+    doc.setFillColor(...colorTema);
+    doc.rect(0, 0, 210, 30, 'F');
   
-  // ENCABEZADO CORPORATIVO EN PDF (Igual al estilo de los reportes anteriores)
-  const colorTema = [16, 185, 129]; // Verde corporativo para Inventario
-  doc.setFillColor(...colorTema);
-  doc.rect(0, 0, 210, 30, 'F');
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(22);
-  doc.setTextColor(255, 255, 255);
-  doc.text("COMPUDOCTOR", 15, 20);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text("REPORTE DE INVENTARIO", 195, 20, { align: "right" });
-
-  // Metadatos del reporte
-  doc.setFontSize(12);
-  doc.setTextColor(30, 41, 59); // slate-800
-  doc.setFont("helvetica", "bold");
-  doc.text("ESTADO ACTUAL DE PRODUCTOS EN STOCK", 15, 42);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(71, 85, 105); // slate-600
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(255, 255, 255);
+    doc.text("COMPUDOCTOR", 15, 20);
   
-  doc.text(`Filtro Aplicado: ${rangoFecha} | Categoría: ${filtroCategoria}`, 15, 48);
-  doc.text(`Fecha de Impresión: ${fechaHoy}`, 15, 54);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text("REPORTE DE INVENTARIO Y STOCK", 195, 20, { align: "right" });
+  
+    // Metadatos
+    doc.setFontSize(12);
+    doc.setTextColor(30, 41, 59); // slate-800
+    doc.setFont("helvetica", "bold");
+    doc.text("STOCK ACTUAL DE PRODUCTOS", 15, 42);
+  
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(71, 85, 105); // slate-600
+    
+    doc.text(`Periodo: ${rangoFecha} | Categoría: ${filtroCategoria}`, 15, 48);
+    doc.text(`Fecha de Impresión: ${fechaHoy}`, 15, 54);
 
-  const tableColumn = ["Código", "Categoría", "Producto", "P. Compra", "P. Venta", "Stock", "Ingreso"];
-  const tableRows = productosFiltrados.map(p => [
-    p.codigo_interno || 'N/A',
-    p.categoria_nombre,
-    p.nombre,
-    `S/ ${Number(p.precio_compra).toFixed(2)}`,
-    `S/ ${Number(p.precio_venta).toFixed(2)}`,
-    `${p.stock} und.`,
-    p.fecha_abastecimiento ? new Date(p.fecha_abastecimiento).toLocaleDateString('es-PE') : 'N/A'
-  ]);
+    // 1. TABLA PRINCIPAL (Stock Actual)
+    const tableColumn = ["Código", "Producto", "P. Compra", "P. Venta", "Stock actual"];
+    const tableRows = productosFiltrados.map(p => [
+      p.codigo_interno, p.nombre, `S/ ${Number(p.precio_compra).toFixed(2)}`, `S/ ${Number(p.precio_venta).toFixed(2)}`, `${p.stock} und.`
+    ]);
 
-  autoTable(doc, {
-    startY: 62,
-    head: [tableColumn],
-    body: tableRows,
-    theme: 'grid',
-    headStyles: { fillColor: colorTema, fontStyle: 'bold', textColor: [255, 255, 255] },
-    styles: { fontSize: 8.5, cellPadding: 3 },
-    alternateRowStyles: { fillColor: [248, 250, 252] }
-  });
+    autoTable(doc, {
+      startY: 60,
+      head: [tableColumn],
+      body: tableRows,
+      theme: 'grid',
+      headStyles: { fillColor: colorTema, fontStyle: 'bold', textColor: [255, 255, 255], align: 'center' },
+      styles: { fontSize: 8.5, cellPadding: 3 },
+      alternateRowStyles: { fillColor: [248, 250, 252] }
+    });
 
-  doc.save(`Reporte_Inventario_${rangoFecha.replace(/\s+/g, '_')}.pdf`);
-};
+    // 2. TABLA SECUNDARIA (Historial de Reabastecimientos)
+    const ingresosFiltrados = historialIngresos.filter(ing => {
+      const fechaIngreso = new Date(ing.fecha_movimiento);
+      const hoy = new Date();
+      if (rangoFecha === 'Hoy') return fechaIngreso.toDateString() === hoy.toDateString();
+      if (rangoFecha === 'Este Mes') return fechaIngreso.getMonth() === hoy.getMonth();
+      return true;
+    });
+
+    if (ingresosFiltrados.length > 0) {
+      const finalY = doc.lastAutoTable.finalY + 15; // Dejamos espacio entre tablas
+      
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(30, 41, 59);
+      doc.text("HISTORIAL DE REABASTECIMIENTOS (LOTES INGRESADOS)", 15, finalY);
+
+      const columnHistorial = ["Fecha de Ingreso", "Código", "Producto", "Cantidad Añadida", "Costo Invertido"];
+      const rowsHistorial = ingresosFiltrados.map(ing => [
+        new Date(ing.fecha_movimiento).toLocaleString('es-PE'),
+        ing.codigo_interno,
+        ing.nombre,
+        `+ ${ing.cantidad} und.`,
+        `S/ ${(ing.cantidad * ing.precio_compra).toFixed(2)}`
+      ]);
+
+      autoTable(doc, {
+        startY: finalY + 5,
+        head: [columnHistorial],
+        body: rowsHistorial,
+        theme: 'grid',
+        headStyles: { fillColor: [16, 185, 129], fontStyle: 'bold', textColor: [255, 255, 255] }, // Verde para los ingresos
+        styles: { fontSize: 8.5, cellPadding: 3 },
+        alternateRowStyles: { fillColor: [248, 250, 252] }
+      });
+    }
+
+    doc.save(`Inventario_Kardex_${rangoFecha.replace(' ', '_')}.pdf`);
+  };
 
 export const exportarServiciosExcel = (serviciosFiltrados, rangoFecha) => {
   const datos = serviciosFiltrados.map(s => ({

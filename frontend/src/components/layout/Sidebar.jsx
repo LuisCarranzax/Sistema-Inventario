@@ -29,6 +29,7 @@ const Sidebar = () => {
       { to: "/servicios", label: "Servicio Técnico", icon: FiTool },
       { to: "/punto-venta", label: "Punto de Venta", icon: FiShoppingCart },
       { to: "/historial-ventas", label: "Historial de Ventas", icon: FiFileText },
+      { to: "/cotizaciones", label: "Cotizaciones", icon: FiPenTool },
       { to: "/analiticas", label: "Analíticas", icon: FiTrendingUp }
     ],
     administrador: [
@@ -36,6 +37,8 @@ const Sidebar = () => {
       { to: "/inventario", label: "Inventario", icon: FiBox },
       { to: "/servicios", label: "Servicio Técnico", icon: FiTool },
       { to: "/punto-venta", label: "Punto de Venta", icon: FiShoppingCart },
+      { to: "/historial-ventas", label: "Historial de Ventas", icon: FiFileText },
+      { to: "/cotizaciones", label: "Cotizaciones", icon: FiPenTool },
       { to: "/analiticas", label: "Analíticas", icon: FiTrendingUp },
       { to: "/admin", label: "Panel Admin", icon: FiUser }
     ]
@@ -52,10 +55,12 @@ const Sidebar = () => {
         </button>
       </div>
 
-      {/* Saludo dinámico [cite: 426, 445] */}
+      {/* Saludo dinámico [cite: 426, 445] 
       <div className="user-greeting">
-        {!isCollapsed && <span>Hola, {user?.nombre || 'Usuario'}</span>}
-      </div>
+        {!isCollapsed && <span>Hola, {user?.nombre || 'Usuario'} </span>}
+      </div>*/}
+
+      
 
       <nav className="nav-menu">
         {Object.entries(navConfig[user.rol]).map(([key, item]) => (

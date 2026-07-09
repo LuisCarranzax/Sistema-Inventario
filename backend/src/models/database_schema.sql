@@ -127,3 +127,38 @@ CREATE TABLE auditoria (
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
+
+-- 1. Actualizar la tabla clientes (Añadir soporte B2B)
+ALTER TABLE clientes
+ADD COLUMN tipo_cliente ENUM('natural', 'empresa') DEFAULT 'natural' AFTER nombre_completo,
+ADD COLUMN documento VARCHAR(20) NULL AFTER tipo_cliente,
+ADD COLUMN representante_legal VARCHAR(150) NULL AFTER documento,
+ADD COLUMN direccion VARCHAR(255) NULL AFTER telefono;
+
+
+
+-- 2. Crear tabla cotizaciones (La Cabecera)
+CREATE TABLE cotizaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cliente_id INT NOT NULL,
+    usuario_id INT NOT NULL, -- El trabajador que generó la proforma
+    fecha_emision DATETIME DEFAULT CURRENT_TIMESTAMP,
+    validez_dias INT DEFAULT 15,
+    total DECIMAL(10,2) NOT NULL,
+    estado ENUM('Pendiente', 'Aprobada', 'Rechazada') DEFAULT 'Pendiente',
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+-- 3. Crear tabla detalle_cotizaciones (Los Ítems)
+CREATE TABLE detalle_cotizaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cotizacion_id INT NOT NULL,
+    tipo_item ENUM('producto', 'servicio') NOT NULL,
+    producto_id INT NULL, -- Es NULL si el trabajador escribe un servicio manual
+    descripcion VARCHAR(255) NOT NULL,
+    cantidad INT NOT NULL,
+    precio_unitario DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (cotizacion_id) REFERENCES cotizaciones(id) ON DELETE CASCADE,
+    FOREIGN KEY (producto_id) REFERENCES productos(id)
+);

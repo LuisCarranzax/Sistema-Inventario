@@ -16,6 +16,7 @@ const HistorialVentas = () => {
   // NUEVOS ESTADOS: Modal de previsualización y cargando detalle
   const [ventaSeleccionada, setVentaSeleccionada] = useState(null);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
+  
 
   // Estados de apertura para selectores personalizados
   const [openFiltroFecha, setOpenFiltroFecha] = useState(false);
@@ -25,6 +26,7 @@ const HistorialVentas = () => {
   const dropdownRef = useRef(null);
   const refFecha = useRef(null);
   const refTipo = useRef(null);
+  
 
   const opcionesFecha = [
     { value: 'Todos los tiempos', label: 'Todos los tiempos', icon: <FiCalendar size={15} /> },
