@@ -182,7 +182,6 @@ const FormularioProducto = ({ productoAEditar, cerrarFormulario }) => {
 
   return (
     <div className="form-container">
-      <h2>{productoAEditar ? 'Editar Producto' : 'Registrar Nuevo Producto'}</h2>
       
       <form onSubmit={handleSubmit}>
         

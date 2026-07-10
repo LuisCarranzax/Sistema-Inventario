@@ -309,6 +309,7 @@ const Inventario = () => {
         <div className="modal-overlay" onClick={cerrarFormulario}>
           <div className="modal-content modal-formulario-producto" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px', textAlign: 'left' }}>
             <div className="modal-header-detalles" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #F1F5F9', paddingBottom: '12px' }}>
+              
               <h2 style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#0F172A' }}>
                 {productoAEditar ? 'Editar Producto' : 'Registrar Nuevo Producto'}
               </h2>

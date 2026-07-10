@@ -34,6 +34,8 @@ const Servicios = () => {
   const [openFiltroPago, setOpenFiltroPago] = useState(false);
   const [openFiltroFecha, setOpenFiltroFecha] = useState(false);
   const [openEditEstado, setOpenEditEstado] = useState(false);
+  const [openEditPagoEstado, setOpenEditPagoEstado] = useState(false);
+  const [openEditPagoMetodo, setOpenEditPagoMetodo] = useState(false);
 
   // Referencias para cerrar menús al hacer clic afuera
   const dropdownRef = useRef(null);
@@ -42,6 +44,8 @@ const Servicios = () => {
   const refPago = useRef(null);
   const refFecha = useRef(null);
   const refEditEstado = useRef(null);
+  const refEditPagoEstado = useRef(null);
+  const refEditPagoMetodo = useRef(null);
 
   // Opciones de Fecha
   const opcionesFecha = [
@@ -68,6 +72,21 @@ const Servicios = () => {
     { value: 'entregado', label: 'Entregado', icon: <FiPackage size={15} /> },
     { value: 'agendado', label: 'Agendado', icon: <FiCalendar size={15} /> },
     { value: 'instalado', label: 'Instalado', icon: <FiCheckCircle size={15} /> }
+  ];
+
+  // Opciones de Pago del Modal con Iconos
+  const opcionesEditPagoEstado = [
+    { value: 'pendiente', label: 'Pendiente', icon: <FiAlertTriangle size={15} color="#EF4444" /> },
+    { value: 'a_cuenta', label: 'A Cuenta', icon: <FiClock size={15} color="#F59E0B" /> },
+    { value: 'cancelado', label: 'Cancelado', icon: <FiCheckCircle size={15} color="#10B981" /> }
+  ];
+
+  const opcionesEditPagoMetodo = [
+    { value: 'Por definir', label: 'Por definir', icon: <FiClock size={15} color="#64748B" /> },
+    { value: 'Efectivo', label: 'Efectivo', icon: <FiCreditCard size={15} /> },
+    { value: 'Yape', label: 'Yape', icon: <FiCreditCard size={15} /> },
+    { value: 'Plin', label: 'Plin', icon: <FiCreditCard size={15} /> },
+    { value: 'Transferencia', label: 'Transferencia Bancaria', icon: <FiCreditCard size={15} /> }
   ];
 
   // Opciones de Tipo de Equipo con Iconos
@@ -157,6 +176,12 @@ const Servicios = () => {
       }
       if (refEditEstado.current && !refEditEstado.current.contains(event.target)) {
         setOpenEditEstado(false);
+      }
+      if (refEditPagoEstado.current && !refEditPagoEstado.current.contains(event.target)) {
+        setOpenEditPagoEstado(false);
+      }
+      if (refEditPagoMetodo.current && !refEditPagoMetodo.current.contains(event.target)) {
+        setOpenEditPagoMetodo(false);
       }
       if (refEquipo.current && !refEquipo.current.contains(event.target)) {
         setOpenFiltroEquipo(false);
@@ -509,47 +534,53 @@ const Servicios = () => {
             <table className="tabla-inventario">
               <thead>
                 <tr>
-                  <th>Ticket</th>
+                  <th style={{ textAlign: 'center', width: '70px' }}>Ticket</th>
                   <th>Cliente</th>
                   <th>Equipo</th>
-                  <th>Servicio a Realizar</th>
-                  <th>Precio</th>
-                  <th>Estado</th>
-                  <th>Pago</th>
-                  <th>Ingreso</th>
-                  <th>Acciones Rápidas</th>
+                  <th style={{ textAlign: 'right', width: '100px' }}>Precio</th>
+                  <th style={{ textAlign: 'center', width: '140px' }}>Estado</th>
+                  <th style={{ textAlign: 'center', width: '170px' }}>Pago</th>
+                  <th style={{ textAlign: 'center', width: '130px' }}>Ingreso</th>
+                  <th style={{ textAlign: 'center', width: '150px' }}>Acciones Rápidas</th>
                 </tr>
               </thead>
               <tbody>
                 {serviciosFiltrados.length > 0 ? (
                   serviciosFiltrados.map((serv) => (
                     <tr key={serv.id} onClick={() => handleVerDetalles(serv)} style={{ cursor: 'pointer' }}>
-                      <td style={{ fontWeight: 'bold', color: '#64748B' }}>#{serv.id}</td>
-                      <td style={{ fontWeight: 'bold' }}>{serv.cliente_nombre}</td>
-                      <td>{serv.equipo_dispositivo}</td>
-                      <td style={{ fontSize: '0.85rem' }}>{renderServicioRealizado(serv.servicio_realizado)}</td>
-                      <td style={{ color: '#059669', fontWeight: 'bold' }}>S/ {Number(serv.precio).toFixed(2)}</td>
-                      <td>
+                      <td style={{ fontWeight: 'bold', color: '#64748B', textAlign: 'center' }}>#{serv.id}</td>
+                      <td style={{ fontWeight: 'bold', color: '#334155' }}>{serv.cliente_nombre}</td>
+                      <td style={{ color: '#475569' }}>{serv.equipo_dispositivo}</td>
+                      <td style={{ color: '#059669', fontWeight: 'bold', textAlign: 'right' }}>S/ {Number(serv.precio).toFixed(2)}</td>
+                      <td style={{ textAlign: 'center' }}>
                         <span className={`estado-badge ${
                           serv.estado === 'en_revision' ? 'estado-revision' :
                           serv.estado === 'reparado' ? 'estado-reparado' :
                           serv.estado === 'entregado' ? 'estado-entregado' :
                           serv.estado === 'agendado' ? 'estado-agendado' : 'estado-instalado'
-                        }`}>
+                        }`} style={{ display: 'inline-flex', justifyContent: 'center', alignItems: 'center', width: '120px' }}>
                           {serv.estado.replace('_', ' ')}
                         </span>
                       </td>
-                      <td>
+                      <td style={{ textAlign: 'center' }}>
                         <span className={`pago-badge ${serv.estado_pago === 'pendiente' ? 'pago-pendiente' :
                           serv.estado_pago === 'a_cuenta' ? 'pago-a_cuenta' : 'pago-cancelado'
-                        }`}>
+                        }`}
+                        style={{ display: 'inline-flex', justifyContent: 'center', alignItems: 'center', minWidth: '150px' }}>
                           {serv.estado_pago === 'pendiente' ? 'Pendiente' :
                             serv.estado_pago === 'a_cuenta' ? `A Cuenta (${serv.metodo_pago})` : `Cancelado (${serv.metodo_pago})`}
                         </span>
                       </td>
-                      <td style={{ fontSize: '0.85rem' }}>{new Date(serv.fecha_ingreso).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                      <td style={{ fontSize: '0.82rem', textAlign: 'center', whiteSpace: 'nowrap', lineHeight: '1.2' }}>
+                        <div style={{ fontWeight: '600', color: '#334155' }}>
+                          {new Date(serv.fecha_ingreso).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        </div>
+                        <div style={{ color: '#64748B', fontSize: '0.75rem', marginTop: '3px' }}>
+                          {new Date(serv.fecha_ingreso).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                        </div>
+                      </td>
                       
-                      <td onClick={(e) => e.stopPropagation()}>
+                      <td onClick={(e) => e.stopPropagation()} style={{ textAlign: 'center' }}>
                         {/* Botones de acción rápida para el Taller */}
                         <div className="acciones-col">
                           {serv.equipo_dispositivo && serv.equipo_dispositivo.startsWith('Cámaras de Seguridad') && serv.estado === 'agendado' && (
@@ -699,20 +730,44 @@ const Servicios = () => {
                 <div className="pago-update-box">
                   <h3>Registrar / Actualizar Pago</h3>
                   <div className="pago-update-form">
-                    <div className="input-group-pago">
+                    <div className="input-group-pago" ref={refEditPagoEstado}>
                       <label>Estado del Pago</label>
-                      <select 
-                        value={editPagoEstado} 
-                        onChange={(e) => {
-                          setEditPagoEstado(e.target.value);
-                          if (e.target.value === 'pendiente') setEditPagoMetodo('Por definir');
-                          else if (editPagoMetodo === 'Por definir') setEditPagoMetodo('Efectivo');
-                        }}
-                      >
-                        <option value="cancelado">Cancelado (Completo)</option>
-                        <option value="a_cuenta">A Cuenta (Adelanto)</option>
-                        <option value="pendiente">Pendiente</option>
-                      </select>
+                      <div className="custom-select-container">
+                        <button 
+                          type="button" 
+                          className="custom-select-trigger" 
+                          onClick={() => setOpenEditPagoEstado(!openEditPagoEstado)}
+                        >
+                          <span className="custom-select-selected-value">
+                            {opcionesEditPagoEstado.find(o => o.value === editPagoEstado)?.icon}
+                            <span>{opcionesEditPagoEstado.find(o => o.value === editPagoEstado)?.label}</span>
+                          </span>
+                          <FiChevronDown className={`select-arrow ${openEditPagoEstado ? 'open' : ''}`} />
+                        </button>
+                        {openEditPagoEstado && (
+                          <div className="custom-select-options" style={{ zIndex: 1100 }}>
+                            {opcionesEditPagoEstado.map(opt => (
+                              <button 
+                                type="button"
+                                key={opt.value} 
+                                className={`custom-select-option ${editPagoEstado === opt.value ? 'selected' : ''}`}
+                                onClick={() => {
+                                  setEditPagoEstado(opt.value);
+                                  setOpenEditPagoEstado(false);
+                                  if (opt.value === 'pendiente') {
+                                    setEditPagoMetodo('Por definir');
+                                  } else if (editPagoMetodo === 'Por definir') {
+                                    setEditPagoMetodo('Efectivo');
+                                  }
+                                }}
+                              >
+                                {opt.icon}
+                                <span>{opt.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {editPagoEstado === 'a_cuenta' && (
@@ -728,24 +783,46 @@ const Servicios = () => {
                       </div>
                     )}
 
-                    <div className="input-group-pago">
+                    <div className="input-group-pago" ref={refEditPagoMetodo}>
                       <label>Método de Pago</label>
-                      <select 
-                        value={editPagoMetodo} 
-                        onChange={(e) => setEditPagoMetodo(e.target.value)} 
-                        disabled={editPagoEstado === 'pendiente'}
-                      >
-                        {editPagoEstado === 'pendiente' ? (
-                          <option value="Por definir">Por definir</option>
-                        ) : (
-                          <>
-                            <option value="Efectivo">Efectivo</option>
-                            <option value="Yape">Yape</option>
-                            <option value="Plin">Plin</option>
-                            <option value="Transferencia">Transferencia Bancaria</option>
-                          </>
+                      <div className="custom-select-container">
+                        <button 
+                          type="button" 
+                          className="custom-select-trigger"
+                          style={editPagoEstado === 'pendiente' ? { backgroundColor: '#F1F5F9', color: '#94A3B8', cursor: 'not-allowed', borderColor: '#E2E8F0' } : {}}
+                          onClick={() => {
+                            if (editPagoEstado !== 'pendiente') {
+                              setOpenEditPagoMetodo(!openEditPagoMetodo);
+                            }
+                          }}
+                        >
+                          <span className="custom-select-selected-value">
+                            {opcionesEditPagoMetodo.find(o => o.value === editPagoMetodo)?.icon}
+                            <span>{opcionesEditPagoMetodo.find(o => o.value === editPagoMetodo)?.label}</span>
+                          </span>
+                          {editPagoEstado !== 'pendiente' && (
+                            <FiChevronDown className={`select-arrow ${openEditPagoMetodo ? 'open' : ''}`} />
+                          )}
+                        </button>
+                        {openEditPagoMetodo && editPagoEstado !== 'pendiente' && (
+                          <div className="custom-select-options" style={{ zIndex: 1100 }}>
+                            {opcionesEditPagoMetodo.filter(o => o.value !== 'Por definir').map(opt => (
+                              <button 
+                                type="button"
+                                key={opt.value} 
+                                className={`custom-select-option ${editPagoMetodo === opt.value ? 'selected' : ''}`}
+                                onClick={() => {
+                                  setEditPagoMetodo(opt.value);
+                                  setOpenEditPagoMetodo(false);
+                                }}
+                              >
+                                {opt.icon}
+                                <span>{opt.label}</span>
+                              </button>
+                            ))}
+                          </div>
                         )}
-                      </select>
+                      </div>
                     </div>
 
                     <button className="btn-actualizar-pago" onClick={handleActualizarPago}>
@@ -762,7 +839,7 @@ const Servicios = () => {
                   <div className="pago-update-form">
                     <div className="input-group-pago" ref={refEditEstado}>
                       <label>Estado Técnico</label>
-                        <div className="custom-select-container">
+                      <div className="custom-select-container">
                         <button 
                           type="button" 
                           className="custom-select-trigger" 
@@ -775,12 +852,12 @@ const Servicios = () => {
                           <FiChevronDown className={`select-arrow ${openEditEstado ? 'open' : ''}`} />
                         </button>
                         {openEditEstado && (
-                          <div className="custom-select-options" style={{ top: 'auto', bottom: '100%', marginBottom: '8px'}}>
+                          <div className="custom-select-options" style={{ zIndex: 1100 }}>
                             {opcionesEditEstado.map(opt => (
                               <button 
                                 type="button"
                                 key={opt.value} 
-                                className={`custom-select-option ${editEstado === opt.value ? 'selected' : ''}`}
+                                className={`custom-select-option ${editEstado === opt.value ? '' : ''}`}
                                 onClick={() => {
                                   setEditEstado(opt.value);
                                   setOpenEditEstado(false);
@@ -792,7 +869,7 @@ const Servicios = () => {
                             ))}
                           </div>
                         )}
-                      </div>  
+                      </div>
                     </div>
 
                     <button className="btn-actualizar-estado" onClick={handleActualizarEstado}>
