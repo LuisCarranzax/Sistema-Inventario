@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
-import api from '../services/api';
-import { AuthContext } from '../context/AuthContext';
+import api from '../../services/api';
+import { AuthContext } from '../../context/AuthContext';
 import { FiActivity, FiAlertTriangle, FiDollarSign, FiShoppingBag, FiTool, FiPackage, FiFolder, FiUser, FiClock } from 'react-icons/fi';
-import '../css/Dashboard.css';
+import './Dashboard.css';
 
 const getModuloInfo = (modulo) => {
   switch (modulo) {

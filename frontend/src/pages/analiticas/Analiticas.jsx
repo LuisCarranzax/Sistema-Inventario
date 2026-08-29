@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
-import api from '../services/api';
-import { generarReporteMensualPDF, generarReportePersonalizadoPDF } from '../../../backend/src/services/reporteServices';
+import api from '../../services/api';
+import { generarReporteMensualPDF, generarReportePersonalizadoPDF } from '../../services/reporteServices';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { FiDownload, FiTrendingUp, FiDollarSign, FiShoppingBag, FiTool } from 'react-icons/fi';
-import '../css/Analiticas.css';
-import { useToast } from '../context/ToastContext';
-import { AuthContext } from '../context/AuthContext';
+import './Analiticas.css';
+import { useToast } from '../../context/ToastContext';
+import { AuthContext } from '../../context/AuthContext';
 
 
 

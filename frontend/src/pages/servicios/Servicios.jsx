@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '../services/api';
-import FormularioServicio from '../components/servicios/FormularioServicio';
+import api from '../../services/api';
+import FormularioServicio from '../../components/servicios/FormularioServicio';
 import { 
   FiPlus, FiArrowLeft, FiTrash2, FiCheckCircle, FiTool, FiAlertCircle, FiDownload,
   FiActivity, FiSearch, FiCalendar, FiMonitor, FiPrinter, FiVideo, FiCreditCard, 
   FiAlertTriangle, FiClock, FiChevronDown, FiPackage 
 } from 'react-icons/fi';
 import { FaFileExcel, FaFilePdf } from 'react-icons/fa';
-import { exportarServiciosExcel, exportarServiciosPDF } from '../services/exportServices';
-import '../css/Servicios.css';
-import '../css/Inventario.css';
-import { useToast } from '../context/ToastContext';
+import { exportarServiciosExcel, exportarServiciosPDF } from '../../services/exportServices';
+import './Servicios.css';
+import '../inventario/Inventario.css';
+import { useToast } from '../../context/ToastContext';
 
 const Servicios = () => {
   const { showToast } = useToast();

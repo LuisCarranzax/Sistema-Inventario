@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '../services/api';
+import api from '../../services/api';
 import { FiDownload, FiFileText, FiCheckCircle, FiCalendar, FiChevronDown } from 'react-icons/fi';
-import { generarDocumentoPDF } from '../../../backend/src/services/pdfServices';
+import { generarDocumentoPDF } from '../../../../backend/src/services/pdfServices';
 import * as XLSX from 'xlsx';
-import '../css/Inventario.css'; // Reutilizamos los estilos de tabla y filtros
+import '../inventario/Inventario.css'; // Reutilizamos los estilos de tabla y filtros
 
 const HistorialVentas = () => {
   const [ventas, setVentas] = useState([]);

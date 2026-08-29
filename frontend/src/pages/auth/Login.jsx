@@ -3,7 +3,7 @@ import { FiMail, FiLock, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api'; // Nuestra conexión a Axios
 import { AuthContext } from '../../context/AuthContext';
-import '../../css/auth/Login.css'; 
+import './Login.css'; 
 
 const Login = () => {
   const [credentials, setCredentials] = useState({ correo: '', password: '' });

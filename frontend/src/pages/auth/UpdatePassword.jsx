@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertCircle, FiCheckCircle, FiKey } from 'react-icons/fi';
-import '../../css/auth/Register.css';
+import './Register.css';
 import api from '../../services/api';
 
 const UpdatePassword = () => {

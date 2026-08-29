@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import api from '../services/api';
+import api from '../../services/api';
 import { FiSearch, FiTrash2, FiPlus, FiMinus, FiUser } from 'react-icons/fi';
-import { generarDocumentoPDF } from '../../../backend/src/services/pdfServices';
-import '../css/PuntoVenta.css';
-import '../css/Inventario.css';
-import { useToast } from '../context/ToastContext';
+import { generarDocumentoPDF } from '../../services/pdfServices';
+import './PuntoVenta.css';
+import '../inventario/Inventario.css';
+import { useToast } from '../../context/ToastContext';
 
 const PuntoVenta = () => {
   const { showToast } = useToast();

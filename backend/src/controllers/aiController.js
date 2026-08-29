@@ -66,7 +66,7 @@ exports.procesarChat = async (req, res) => {
 
     try {
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.5-flash", // O 3.1-flash-lite
+            model: "gemini-3.1-flash-lite", // O 3.1-flash-lite
             tools: [herramientasDeBaseDeDatos],
             systemInstruction: `
               Eres COMPU-BOT, el Asistente Proactivo de COMPUDOCTOR. 

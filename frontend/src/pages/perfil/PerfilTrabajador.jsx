@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
-import { AuthContext } from '../context/AuthContext';
+import api from '../../services/api';
+import { AuthContext } from '../../context/AuthContext';
 import { FiUser, FiLock, FiMail } from 'react-icons/fi';
-import '../css/PerfilTrabajador.css';
+import './PerfilTrabajador.css';
 
 const PerfilTrabajador = () => {
   const { user, login, logout } = useContext(AuthContext); 

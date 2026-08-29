@@ -1,4 +1,4 @@
-@import './Inventario.css';
+@import '../inventario/Inventario.css';
 
 .analiticas-container {
   padding: 10px;

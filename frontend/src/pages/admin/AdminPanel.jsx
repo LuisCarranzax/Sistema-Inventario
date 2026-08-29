@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import api from '../services/api';
-import { AuthContext } from '../context/AuthContext';
+import api from '../../services/api';
+import { AuthContext } from '../../context/AuthContext';
 import { 
   FiUsers, 
   FiActivity, 
@@ -20,10 +20,10 @@ import {
   FiCheckCircle,
   FiEdit
 } from 'react-icons/fi';
-import { evaluatePasswordStrength } from '../utils/passwordValidator';
-import PerfilTrabajador from './PerfilTrabajador'; // Reutilizamos el componente que ya creaste
-import '../css/Inventario.css'; // Reutilizamos estilos base
-import '../css/auth/Register.css'; // Estilos premium para el registro
+import { evaluatePasswordStrength } from '../../utils/passwordValidator';
+import PerfilTrabajador from '../perfil/PerfilTrabajador'; // Reutilizamos el componente que ya creaste
+import '../inventario/Inventario.css'; // Reutilizamos estilos base
+import '../auth/Register.css'; // Estilos premium para el registro
 
 const PanelAdmin = () => {
   const { user } = useContext(AuthContext);

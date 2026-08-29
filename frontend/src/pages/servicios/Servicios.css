@@ -1,4 +1,4 @@
-@import './Inventario.css';
+@import '../inventario/Inventario.css';
 
 .estado-badge {
   padding: 6px 12px;

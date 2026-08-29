@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import {FiSettings, FiLogOut, FiChevronDown, FiBell } from 'react-icons/fi';
 import api from '../../services/api';
-import '../../css/TopBar.css';
+import './TopBar.css';
 
 
 

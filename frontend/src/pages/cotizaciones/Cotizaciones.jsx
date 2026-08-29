@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
-import api from '../services/api';
-import { AuthContext } from '../context/AuthContext';
+import api from '../../services/api';
+import { AuthContext } from '../../context/AuthContext';
 import { FiPlus, FiTrash2, FiSave, FiUser, FiBox } from 'react-icons/fi';
-import { useToast } from '../context/ToastContext';
-import { generarCotizacionFormalPDF } from '../services/cotizacionServices';
-import '../css/Cotizaciones.css';
+import { useToast } from '../../context/ToastContext';
+import { generarCotizacionFormalPDF } from '../../services/cotizacionServices';
+import './Cotizaciones.css';
 
 const Cotizaciones = () => {
   const { user } = useContext(AuthContext);

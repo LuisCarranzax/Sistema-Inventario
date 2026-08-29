@@ -1,4 +1,4 @@
-@import 'Inventario';
+@import '../inventario/Inventario.css';
 
 .cotizacion-container {
   padding: 20px;

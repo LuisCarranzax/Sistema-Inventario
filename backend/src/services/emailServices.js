@@ -127,9 +127,8 @@ const enviarCorreoRecuperacion = async (correo, codigo) => {
 };
 // Alerta de seguridad al correo antiguo
 const enviarAlertaSeguridad = async (emailAntiguo, nombre) => {
-    // Configura tu transporter de nodemailer aquí (el mismo que ya usas)
     const mailOptions = {
-        from: '"Seguridad COMPUDOCTOR" <tu_correo_mensajero@gmail.com>',
+        from: `"Seguridad COMPUDOCTOR" <${process.env.EMAIL_MESSENGER}>`,
         to: emailAntiguo,
         subject: '⚠️ Aviso de Seguridad: Solicitud de cambio de correo',
         html: `
@@ -145,7 +144,7 @@ const enviarAlertaSeguridad = async (emailAntiguo, nombre) => {
 // Envío del código OTP al correo nuevo
 const enviarOTPCambioCorreo = async (emailNuevo, nombre, codigo) => {
     const mailOptions = {
-        from: '"Soporte COMPUDOCTOR" <tu_correo_mensajero@gmail.com>',
+        from: `"Soporte COMPUDOCTOR" <${process.env.EMAIL_MESSENGER}>`,
         to: emailNuevo,
         subject: '🔐 Código de Verificación para nuevo correo',
         html: `

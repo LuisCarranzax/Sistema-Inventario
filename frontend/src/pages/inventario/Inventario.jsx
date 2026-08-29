@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '../services/api';
-import FormularioProducto from '../components/inventario/FormularioProducto';
+import api from '../../services/api';
+import FormularioProducto from '../../components/inventario/FormularioProducto';
 import { FiPlus, FiEdit2, FiTrash2, FiDownload, FiCalendar, FiChevronDown, FiPackage } from 'react-icons/fi';
 import { FaFilePdf, FaFileExcel } from 'react-icons/fa';
-import { exportarInventarioExcel, exportarInventarioPDF } from '../services/exportServices';
-import '../css/Inventario.css';
+import { exportarInventarioExcel, exportarInventarioPDF } from '../../services/exportServices';
+import './Inventario.css';
 
 const Inventario = () => {
   const [productos, setProductos] = useState([]);

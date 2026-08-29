@@ -15,7 +15,7 @@ import {
 } from 'react-icons/fi';
 import { evaluatePasswordStrength } from '../../utils/passwordValidator';
 import { Link } from 'react-router-dom';
-import '../../css/auth/Register.css'; // Mantenemos el CSS que ya configuramos con transiciones y alertas
+import './Register.css'; // Mantenemos el CSS que ya configuramos con transiciones y alertas
 
 const Register = () => {
   const [formData, setFormData] = useState({

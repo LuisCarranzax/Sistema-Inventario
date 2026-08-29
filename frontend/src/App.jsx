@@ -5,15 +5,15 @@ import Register from './pages/auth/Register';
 import UpdatePassword from './pages/auth/UpdatePassword';
 
 // Importación de Páginas Privadas
-import Dashboard from './pages/Dashboard';
-import PuntoVenta from './pages/PuntoVenta';
-import Inventario from './pages/Inventario';
-import Servicios from './pages/Servicios';
-import Analiticas from './pages/Analiticas';
-import PerfilTrabajador from './pages/PerfilTrabajador';
-import PanelAdmin from './pages/AdminPanel';
-import HistorialVentas from './pages/HistorialVentas';
-import Cotizaciones from './pages/Cotizaciones';
+import Dashboard from './pages/dashboard/Dashboard';
+import PuntoVenta from './pages/punto-venta/PuntoVenta';
+import Inventario from './pages/inventario/Inventario';
+import Servicios from './pages/servicios/Servicios';
+import Analiticas from './pages/analiticas/Analiticas';
+import PerfilTrabajador from './pages/perfil/PerfilTrabajador';
+import PanelAdmin from './pages/admin/AdminPanel';
+import HistorialVentas from './pages/historial-ventas/HistorialVentas';
+import Cotizaciones from './pages/cotizaciones/Cotizaciones';
 
 // IMPORTACIÓN DEL LAYOUT (La pieza que faltaba)
 import Layout from './components/layout/Layout';
